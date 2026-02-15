@@ -1,13 +1,18 @@
-/* Układ nagłówka modala */
-.team-header-input { display: flex; gap: 15px; align-items: flex-end; margin-bottom: 15px; }
+/* Naprawa nagłówka w modalu */
+.team-header-input {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    margin-bottom: 20px;
+}
 
-/* Styl Avatara */
+/* Styl Avatara w Modalu */
 .avatar-upload {
-    width: 60px;
-    height: 60px;
-    background: #0a0a0a;
-    border: 2px dashed #333;
-    border-radius: 8px;
+    width: 64px;
+    height: 64px;
+    background: #0d0d0d;
+    border: 2px dashed #222;
+    border-radius: 6px;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -18,31 +23,50 @@
 .avatar-upload:hover { border-color: #cd412b; }
 .avatar-upload img { width: 100%; height: 100%; object-fit: cover; }
 
-/* System Tagów Graczy */
-.player-input-wrapper { display: flex; gap: 5px; }
-.player-input-wrapper button { background: #333; border: none; color: white; padding: 0 15px; border-radius: 4px; cursor: pointer; }
-
-.tags-container { 
-    display: flex; 
-    flex-wrap: wrap; 
-    gap: 8px; 
-    margin-top: 10px; 
-    min-height: 30px; 
-    padding: 10px;
-    background: #0d0d0d;
+/* Input graczy */
+.player-input-wrapper { display: flex; gap: 8px; margin-bottom: 10px; }
+.btn-add-player { 
+    background: #222; 
+    border: 1px solid #333; 
+    color: white; 
+    padding: 0 15px; 
+    cursor: pointer; 
     border-radius: 4px;
+}
+.btn-add-player:hover { background: #cd412b; }
+
+/* Kontener na tagi nicków */
+.tags-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    background: #080808;
+    padding: 10px;
+    border-radius: 4px;
+    min-height: 40px;
+    border: 1px solid #1a1a1a;
 }
 
 .player-tag {
-    background: #222;
-    color: #eee;
-    padding: 5px 10px;
+    background: #1a1a1a;
+    border: 1px solid #333;
+    padding: 4px 10px;
     border-radius: 3px;
     font-size: 12px;
     display: flex;
     align-items: center;
     gap: 8px;
-    border: 1px solid #333;
 }
 
-.player-tag span { cursor: pointer; color: #cd412b; font-weight: bold; }
+.player-tag span { color: #cd412b; cursor: pointer; font-weight: bold; font-size: 14px; }
+
+/* Wygląd Karty Teamu na stronie głównej */
+.team-card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #222;
+}
+.team-card-avatar { width: 35px; height: 35px; border-radius: 4px; object-fit: cover; }
