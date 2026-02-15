@@ -1,32 +1,33 @@
 body { background-color: #0a0a0a; color: #e0e0e0; font-family: 'Segoe UI', sans-serif; margin: 0; padding-top: 100px; }
 
-.verify-banner {
+/* EKRAN BLOKADY */
+.full-overlay {
     position: fixed;
-    top: 70px;
+    top: 0;
     left: 0;
-    right: 0;
-    background: #cd412b;
-    color: white;
-    text-align: center;
-    padding: 12px;
-    font-size: 14px;
-    z-index: 999;
-    border-bottom: 2px solid rgba(0,0,0,0.2);
+    width: 100%;
+    height: 100%;
+    background: #0a0a0a;
+    z-index: 9999;
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 15px;
+    text-align: center;
 }
 
-.verify-banner button {
-    background: white;
-    color: #cd412b;
-    border: none;
-    padding: 5px 12px;
-    cursor: pointer;
-    border-radius: 4px;
-    font-weight: bold;
-    font-size: 12px;
+.overlay-content {
+    max-width: 400px;
+    padding: 40px;
+    background: #111;
+    border-top: 5px solid #cd412b;
+    border-radius: 8px;
+}
+
+.overlay-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 20px;
 }
 
 .top-bar { position: fixed; top: 0; left: 0; right: 0; height: 70px; background: #111; display: flex; justify-content: space-between; align-items: center; padding: 0 40px; border-bottom: 1px solid #222; z-index: 1000; }
