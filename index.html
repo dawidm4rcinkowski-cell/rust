@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rust Team Manager Pro - Cloud Edition</title>
+    <title>Rust Team Manager Pro</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
     <div class="top-bar">
         <div class="server-info">
-            <span id="serverName">Ładowanie danych serwera...</span>
+            <span id="serverName">Ładowanie...</span>
             <span id="onlineCount" class="count-badge">0/0</span>
         </div>
         
@@ -19,19 +19,14 @@
                 <button class="btn-outline" onclick="toggleModal('authModal', true)">ZALOGUJ / REJESTRACJA</button>
             </div>
             <div id="userInfo" style="display: none; align-items: center; gap: 10px;">
-                <span id="userMail" style="font-size: 13px; color: #4CAF50; font-weight: bold;"></span>
+                <span id="userDisplayName" style="font-size: 13px; color: #4CAF50; font-weight: bold;"></span>
                 <button class="btn-logout" onclick="logoutUser()">Wyloguj</button>
             </div>
             <button class="btn-open" onclick="toggleModal('teamModal', true)">+ STWÓRZ TEAM</button>
         </div>
     </div>
 
-    <div class="main-content">
-        <div class="section-header">
-            <h2>ZAREJESTROWANE DRUŻYNY</h2>
-        </div>
-        <div id="teamsGrid" class="teams-container"></div>
-    </div>
+    <div id="teamsGrid" class="teams-container" style="padding: 40px;"></div>
 
     <div id="authModal" class="modal">
         <div class="modal-content">
@@ -40,27 +35,37 @@
                 <button class="tab-btn active" onclick="switchAuthTab('login')">Logowanie</button>
                 <button class="tab-btn" onclick="switchAuthTab('register')">Rejestracja</button>
             </div>
-            <div id="authFields">
-                <div class="form-group" id="nickGroup" style="display: none;">
-                    <label>TWÓJ LOGIN (NICK)</label>
-                    <input type="text" id="authNick" placeholder="np. MasterRust">
-                </div>
-                <div class="form-group">
-                    <label>E-MAIL</label>
-                    <input type="email" id="authEmail">
-                </div>
-                <div class="form-group">
-                    <label>HASŁO</label>
-                    <input type="password" id="authPassword">
-                </div>
-                <button class="btn-save" id="authSubmit" onclick="handleAuth()">ZALOGUJ SIĘ</button>
-                
-                <div style="text-align: center; margin-top: 15px; border-top: 1px solid #222; padding-top: 15px;">
-                    <button class="btn-google" onclick="loginWithGoogle()">
-                        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18"> Kontynuuj z Google
-                    </button>
-                </div>
+            <div class="form-group" id="nickGroup" style="display: none;">
+                <label>LOGIN (WYMAGANY)</label>
+                <input type="text" id="authNick" placeholder="Twój unikalny nick">
             </div>
+            <div class="form-group">
+                <label id="loginLabel">E-MAIL</label>
+                <input type="text" id="authEmail" placeholder="email@domena.com">
+            </div>
+            <div class="form-group">
+                <label>HASŁO</label>
+                <input type="password" id="authPassword">
+            </div>
+            <button class="btn-save" id="authSubmit" onclick="handleAuth()">ZALOGUJ SIĘ</button>
+            
+            <div style="text-align: center; margin-top: 15px; border-top: 1px solid #222; padding-top: 15px;">
+                <button class="btn-google" onclick="loginWithGoogle()">
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18"> Kontynuuj z Google
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="onboardingModal" class="modal">
+        <div class="modal-content">
+            <h2>Dokończ konfigurację</h2>
+            <p style="font-size: 12px; color: #888;">Wybierz swój unikalny login, aby kontynuować.</p>
+            <div class="form-group">
+                <label>TWÓJ LOGIN</label>
+                <input type="text" id="onboardingNick" placeholder="np. MasterRust">
+            </div>
+            <button class="btn-save" onclick="saveOnboardingNick()">ZAPISZ I WEJDŹ</button>
         </div>
     </div>
 
@@ -68,27 +73,10 @@
         <div class="modal-content">
             <span class="close-btn" onclick="toggleModal('teamModal', false)">&times;</span>
             <h2>Nowy Team</h2>
-            <div class="form-group">
-                <label>NAZWA TEAMU</label>
-                <input type="text" id="teamName">
-            </div>
-            <div class="form-group">
-                <label>LINK DO LOGO (URL)</label>
-                <input type="text" id="teamLogo" placeholder="http://...">
-            </div>
-            <div class="form-group">
-                <label>KRATKA BAZY</label>
-                <input type="text" id="baseGrid">
-            </div>
-            <div class="form-group">
-                <label>HASŁO LIDERA</label>
-                <input type="password" id="leaderPass">
-            </div>
-            <div class="form-group">
-                <label>GRACZE (PO PRZECINKU)</label>
-                <textarea id="teamPlayers" rows="3"></textarea>
-            </div>
-            <button class="btn-save" onclick="addTeam()">ZAPISZ W CHMURZE</button>
+            <div class="form-group"><label>NAZWA</label><input type="text" id="teamName"></div>
+            <div class="form-group"><label>KRATKA</label><input type="text" id="baseGrid"></div>
+            <div class="form-group"><label>GRACZE</label><textarea id="teamPlayers"></textarea></div>
+            <button class="btn-save" onclick="addTeam()">ZAPISZ</button>
         </div>
     </div>
 
