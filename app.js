@@ -17,19 +17,17 @@ const SERVER_ID = '3344761';
 let playersOnlineNames = [];
 let authMode = 'login';
 
-// --- SYSTEM AUTORYZACJI (LOGOWANIE I REJESTRACJA) ---
+// --- SYSTEM AUTORYZACJI ---
 
-// Przełączanie między zakładkami Logowanie / Rejestracja
 function switchAuthTab(mode) {
     authMode = mode;
     document.getElementById('authSubmit').innerText = mode === 'login' ? 'ZALOGUJ SIĘ' : 'ZAŁÓŻ KONTO';
     document.getElementById('nickGroup').style.display = mode === 'login' ? 'none' : 'block';
     document.getElementById('loginLabel').innerText = mode === 'login' ? 'LOGIN LUB E-MAIL' : 'E-MAIL';
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    event.target.classList.add('active');
+    if (event) event.target.classList.add('active');
 }
 
-// Obsługa logowania i rejestracji e-mailem/loginem
 async function handleAuth() {
     const emailOrLogin = document.getElementById('authEmail').value;
     const pass = document.getElementById('authPassword').value;
@@ -38,7 +36,6 @@ async function handleAuth() {
     try {
         if (authMode === 'login') {
             let finalEmail = emailOrLogin;
-            // Logowanie samym loginem - szukanie maila w Firestore
             if (!emailOrLogin.includes('@')) {
                 const userDoc = await db.collection("users").doc(emailOrLogin.toLowerCase()).get();
                 if (!userDoc.exists) throw new Error("Nie znaleziono takiego loginu.");
@@ -46,15 +43,12 @@ async function handleAuth() {
             }
             await auth.signInWithEmailAndPassword(finalEmail, pass);
         } else {
-            // Rejestracja nowego użytkownika
             if (!nick) throw new Error("Login jest wymagany!");
             const nickLower = nick.toLowerCase();
-            
             const checkNick = await db.collection("users").doc(nickLower).get();
             if (checkNick.exists) throw new Error("Ten login jest już zajęty!");
 
             const res = await auth.createUserWithEmailAndPassword(emailOrLogin, pass);
-            // Zapisanie powiązania Login -> Email w bazie
             await db.collection("users").doc(nickLower).set({ email: emailOrLogin, uid: res.user.uid });
             await res.user.updateProfile({ displayName: nick });
         }
@@ -62,40 +56,42 @@ async function handleAuth() {
     } catch (e) { alert(e.message); }
 }
 
-// Logowanie przez Google
 async function loginWithGoogle() {
     const provider = new firebase.auth.GoogleAuthProvider();
     try {
         const res = await auth.signInWithPopup(provider);
-        // Po udanym logowaniu sprawdzamy nick
+        // Po zamknięciu popupu Google, sprawdzamy nick
         checkUserNick(res.user);
     } catch (e) { alert(e.message); }
 }
 
-// Sprawdzanie czy użytkownik ma przypisany login w Firestore
+// KLUCZOWA FUNKCJA: Sprawdzanie nicku i zamykanie okien
 async function checkUserNick(user) {
     if (!user) return;
     
-    const userQuery = await db.collection("users").where("uid", "==", user.uid).get();
-    
-    if (userQuery.empty) {
-        // Jeśli nie ma nicku w bazie, wymuś jego wpisanie
-        toggleModal('authModal', false);
-        toggleModal('onboardingModal', true);
-    } else {
-        // Jeśli ma nick - zamknij okno logowania i wyświetl dane
-        toggleModal('authModal', false); 
+    try {
+        const userQuery = await db.collection("users").where("uid", "==", user.uid).get();
         
-        const foundNick = userQuery.docs[0].id;
-        document.getElementById('userDisplayName').innerText = foundNick;
-        
-        if (user.displayName !== foundNick) {
-            await user.updateProfile({ displayName: foundNick });
+        if (userQuery.empty) {
+            // Brak nicku - przełączamy modale
+            toggleModal('authModal', false);
+            toggleModal('onboardingModal', true);
+        } else {
+            // Nick istnieje - ZAMYKAMY OKNO LOGOWANIA natychmiast
+            toggleModal('authModal', false); 
+            
+            const foundNick = userQuery.docs[0].id;
+            document.getElementById('userDisplayName').innerText = foundNick;
+            
+            if (user.displayName !== foundNick) {
+                await user.updateProfile({ displayName: foundNick });
+            }
         }
+    } catch (error) {
+        console.error("Błąd sprawdzania nicku:", error);
     }
 }
 
-// Zapisywanie loginu dla użytkowników Google
 async function saveOnboardingNick() {
     const nick = document.getElementById('onboardingNick').value;
     if (!nick || nick.length < 3) return alert("Login musi mieć min. 3 znaki!");
@@ -118,13 +114,20 @@ async function saveOnboardingNick() {
     } catch (e) { alert(e.message); }
 }
 
-// Słuchacz stanu zalogowania
+// Słuchacz stanu zalogowania z wymuszonym zamykaniem modala
 auth.onAuthStateChanged(user => {
-    document.getElementById('authButtons').style.display = user ? 'none' : 'block';
-    document.getElementById('userInfo').style.display = user ? 'flex' : 'none';
+    const authButtons = document.getElementById('authButtons');
+    const userInfo = document.getElementById('userInfo');
+
     if (user) {
-        document.getElementById('userDisplayName').innerText = user.displayName || "Ustawianie...";
+        authButtons.style.display = 'none';
+        userInfo.style.display = 'flex';
+        // Wymuszone zamknięcie modala przy wykryciu sesji
+        toggleModal('authModal', false);
         checkUserNick(user);
+    } else {
+        authButtons.style.display = 'block';
+        userInfo.style.display = 'none';
     }
 });
 
@@ -134,9 +137,8 @@ function logoutUser() {
     }); 
 }
 
-// --- LOGIKA RUST I DRUŻYN ---
+// --- RUST LOGIKA ---
 
-// Pobieranie statusu serwera z BattleMetrics
 async function fetchServerStatus() {
     try {
         const res = await fetch(`https://api.battlemetrics.com/servers/${SERVER_ID}?include=player`);
@@ -148,7 +150,6 @@ async function fetchServerStatus() {
     } catch (e) { console.log("Błąd BattleMetrics"); }
 }
 
-// Dodawanie drużyny do Firestore
 function addTeam() {
     if (!auth.currentUser) return alert("Musisz być zalogowany!");
     
@@ -160,14 +161,13 @@ function addTeam() {
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
     };
 
-    if (!teamData.name || !teamData.grid) return alert("Wypełnij nazwę i kratkę!");
+    if (!teamData.name || !teamData.grid) return alert("Wypełnij dane!");
 
     db.collection("teams").add(teamData).then(() => {
         toggleModal('teamModal', false);
     });
 }
 
-// Pobieranie drużyn w czasie rzeczywistym
 function listenToTeams() {
     db.collection("teams").orderBy("createdAt", "desc").onSnapshot(snapshot => {
         const container = document.getElementById('teamsGrid');
@@ -190,9 +190,10 @@ function listenToTeams() {
     });
 }
 
-// Funkcje pomocnicze
-function toggleModal(id, show) { document.getElementById(id).style.display = show ? 'block' : 'none'; }
+function toggleModal(id, show) { 
+    const el = document.getElementById(id);
+    if (el) el.style.display = show ? 'block' : 'none'; 
+}
 
-// Start aplikacji
 fetchServerStatus();
-setInterval(fetchServerStatus, 30000); // Odświeżaj status co 30 sekund
+setInterval(fetchServerStatus, 30000);
