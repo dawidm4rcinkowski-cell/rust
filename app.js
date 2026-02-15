@@ -39,7 +39,6 @@ async function handleAuth() {
     const pass = document.getElementById('authPassword').value;
     const nick = document.getElementById('authNick').value;
     const isLogin = document.getElementById('tab-login').classList.contains('active');
-
     try {
         if (isLogin) {
             await auth.signInWithEmailAndPassword(email, pass);
@@ -76,6 +75,20 @@ async function updateServerStatus() {
     } catch (e) { console.error(e); }
 }
 
+// --- PLAYER DETAILS (KDA / STATS) ---
+function showPlayerDetails(nick) {
+    const isOnline = onlinePlayers.includes(nick.toLowerCase());
+    document.getElementById('modalPlayerName').innerText = nick;
+    document.getElementById('modalPlayerStatus').innerText = isOnline ? "ONLINE" : "OFFLINE";
+    document.getElementById('modalPlayerStatus').style.color = isOnline ? "#4CAF50" : "#666";
+    
+    // Przekierowanie do globalnych statystyk na BattleMetrics
+    const bmUrl = `https://www.battlemetrics.com/players?filter[search]=${encodeURIComponent(nick)}`;
+    document.getElementById('btnPlayerStats').onclick = () => window.open(bmUrl, '_blank');
+    
+    toggleModal('playerModal', true);
+}
+
 // --- TEAM MANAGEMENT ---
 function loadTeams() {
     db.collection("teams").orderBy("createdAt", "desc").onSnapshot(snap => {
@@ -91,7 +104,12 @@ function loadTeams() {
             
             const membersHTML = t.members.map(m => {
                 const isOnline = onlinePlayers.includes(m.toLowerCase());
-                return `<div class="member-row"><span>${m}</span><span class="status-indicator ${isOnline ? 'status-online' : 'status-offline'}"></span></div>`;
+                // Dodajemy onclick="showPlayerDetails"
+                return `
+                    <div class="member-row" onclick="showPlayerDetails('${m}')">
+                        <span>${m}</span>
+                        <span class="status-indicator ${isOnline ? 'status-online' : 'status-offline'}"></span>
+                    </div>`;
             }).join('');
 
             grid.innerHTML += `
@@ -105,7 +123,7 @@ function loadTeams() {
                         ${isLeader ? `<span class="edit-icon" onclick="prepareEditTeam('${id}')">⚙️</span>` : ''}
                     </div>
                     <div class="team-card-members">
-                        <label style="font-size:10px; color:#444;">SKŁAD:</label>
+                        <label style="font-size:10px; color:#444;">SKŁAD (KLIKNIJ PO STATY):</label>
                         ${membersHTML}
                     </div>
                 </div>`;
@@ -154,19 +172,16 @@ async function prepareEditTeam(id) {
     editingTeamId = id;
     const doc = await db.collection("teams").doc(id).get();
     const data = doc.data();
-    
     document.getElementById('teamName').value = data.name;
     document.getElementById('baseGrid').value = data.grid;
     tempPlayers = [...data.members];
     renderTags();
-    
     if (data.avatar) {
         const img = document.getElementById('avatarPreview');
         img.src = data.avatar;
         img.style.display = 'block';
         document.getElementById('avatarPlaceholder').style.display = 'none';
     }
-    
     document.querySelector('#teamModal .rust-title').innerText = "⚙️ EDYTUJ DRUŻYNĘ";
     toggleModal('teamModal', true);
 }
@@ -176,15 +191,12 @@ async function saveTeam() {
     const name = document.getElementById('teamName').value;
     const grid = document.getElementById('baseGrid').value;
     const avatar = document.getElementById('avatarPreview').src;
-
     if (!user || !name || !grid) return alert("Uzupełnij dane!");
-
     const data = {
         name, grid, avatar, members: tempPlayers,
         leaderId: user.uid, leaderNick: user.displayName || user.email,
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     };
-
     try {
         if (editingTeamId) {
             await db.collection("teams").doc(editingTeamId).update(data);
