@@ -1,88 +1,108 @@
-<!DOCTYPE html>
-<html lang="pl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rust Team Manager</title>
-    <link rel="stylesheet" href="main.css">
-    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&display=swap" rel="stylesheet">
-</head>
-<body>
+/* --- FUNDAMENTY --- */
+* { box-sizing: border-box; font-family: 'Oswald', sans-serif; }
+body { 
+    background-color: #0a0a0a !important; 
+    color: #fff !important; 
+    margin: 0; padding-top: 110px;
+}
 
-    <div class="top-bar">
-        <div class="top-bar-left">
-            <div class="status-dot"></div>
-            <div class="server-meta">
-                <span id="serverName">ŁĄCZENIE...</span>
-                <div class="server-row-bottom">
-                    <span id="onlineCount" class="badge">0/0</span>
-                    <button id="btnCreateTeam" class="btn-nav-rust" onclick="toggleModal('teamModal', true)" style="display: none;">+ STWÓRZ TEAM</button>
-                </div>
-            </div>
-        </div>
-        
-        <div class="top-bar-right">
-            <div id="authButtons">
-                <button class="btn-text-only" onclick="toggleModal('authModal', true); switchAuthTab('login')">ZALOGUJ SIĘ</button>
-                <span class="nav-divider">|</span>
-                <button class="btn-text-only" onclick="toggleModal('authModal', true); switchAuthTab('register')">ZAREJESTRUJ SIĘ</button>
-            </div>
-            <div id="userInfo" style="display: none;">
-                <span id="userDisplayName" class="user-nick"></span>
-                <button class="btn-logout-sm" onclick="logoutUser()">WYLOGUJ</button>
-            </div>
-        </div>
-    </div>
+/* --- TOP BAR --- */
+.top-bar { 
+    position: fixed; top: 0; left: 0; width: 100%; height: 90px; 
+    background: #111; display: flex; align-items: center; 
+    justify-content: space-between; padding: 0 40px; 
+    border-bottom: 3px solid #cd412b; z-index: 1000;
+}
 
-    <div id="mainContent" class="container">
-        <div id="teamsGrid" class="teams-grid"></div>
-    </div>
+.top-bar-left { display: flex; align-items: center; gap: 15px; }
+.server-meta { display: flex; flex-direction: column; }
+.server-row-bottom { display: flex; align-items: center; gap: 15px; margin-top: 5px; }
 
-    <div id="authModal" class="modal">
-        <div class="modal-content">
-            <span class="close-btn" onclick="toggleModal('authModal', false)">&times;</span>
-            
-            <div class="auth-tabs">
-                <button id="tab-login" class="tab-btn active" onclick="switchAuthTab('login')">LOGOWANIE</button>
-                <button id="tab-register" class="tab-btn" onclick="switchAuthTab('register')">REJESTRACJA</button>
-            </div>
-            
-            <div id="nickGroup" class="form-group" style="display: none;">
-                <label>TWÓJ NICK</label>
-                <input type="text" id="authNick" placeholder="Nick z gry">
-            </div>
-            <div class="form-group">
-                <label>E-MAIL</label>
-                <input type="email" id="authEmail" placeholder="email@przyklad.pl">
-            </div>
-            <div class="form-group">
-                <label>HASŁO</label>
-                <input type="password" id="authPassword">
-            </div>
-            
-            <button class="btn-rust-main" onclick="handleAuth()">POTWIERDŹ</button>
-            
-            <div class="separator">
-                <span class="separator-text">LUB</span>
-            </div>
-            
-            <button class="btn-google" onclick="loginWithGoogle()">
-                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18"> KONTYNUUJ PRZEZ GOOGLE
-            </button>
-        </div>
-    </div>
+#serverName { font-size: 20px; font-weight: bold; color: #fff; letter-spacing: 1px; text-transform: uppercase; }
 
-    <div id="teamModal" class="modal">
-        <div class="modal-content">
-            <span class="close-btn" onclick="toggleModal('teamModal', false)">&times;</span>
-            <h2 class="rust-title">🛡️ NOWA DRUŻYNA</h2>
-            <button class="btn-rust-main">UTWÓRZ</button>
-        </div>
-    </div>
+.status-dot { 
+    width: 12px; height: 12px; background: #4CAF50; 
+    border-radius: 50%; box-shadow: 0 0 10px #4CAF50; 
+}
 
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-    <script src="app.js"></script>
-</body>
-</html>
+.badge { 
+    background: #000; padding: 2px 10px; border: 1px solid #333; 
+    color: #4CAF50; font-size: 14px; font-weight: bold; 
+}
+
+/* PRZYCISK NAV (OBOK LICZNIKA) */
+.btn-nav-rust {
+    background: none !important; border: 1px solid #cd412b !important;
+    color: #cd412b !important; padding: 2px 10px !important;
+    font-size: 12px; font-weight: bold; cursor: pointer;
+    text-transform: uppercase; transition: 0.2s;
+}
+.btn-nav-rust:hover { background: #cd412b !important; color: #fff !important; }
+
+/* PRZYCISKI TEKSTOWE (PRAWA STRONA) */
+.btn-text-only {
+    background: none !important; border: none !important;
+    color: #eee !important; font-size: 14px; font-weight: bold;
+    cursor: pointer; text-transform: uppercase; letter-spacing: 1px;
+    padding: 10px; transition: color 0.2s;
+}
+.btn-text-only:hover { color: #cd412b !important; }
+
+.nav-divider { color: #333; font-weight: 100; margin: 0 5px; }
+
+/* USER NICK */
+.user-nick { color: #cd412b; font-weight: bold; margin-right: 15px; text-transform: uppercase; }
+
+/* WYLOGUJ */
+.btn-logout-sm {
+    background: #222 !important; border: none !important;
+    color: #888 !important; padding: 5px 12px; font-size: 11px;
+    cursor: pointer; font-weight: bold;
+}
+
+/* --- MODAL LOGOWANIA --- */
+.modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; }
+.modal-content { 
+    background: #151515 !important; width: 95%; max-width: 440px; 
+    margin: 50px auto; padding: 40px; border-top: 5px solid #cd412b; 
+    position: relative; 
+}
+
+/* ZAKŁADKI */
+.auth-tabs { display: flex; gap: 30px; margin-bottom: 35px; border-bottom: 1px solid #222; }
+.tab-btn {
+    background: none !important; border: none !important;
+    color: #444 !important; font-size: 20px !important; 
+    font-weight: bold; cursor: pointer; padding-bottom: 10px;
+}
+.tab-btn.active { color: #cd412b !important; border-bottom: 3px solid #cd412b !important; }
+
+/* SEPARATOR LUB */
+.separator { margin: 25px 0; display: flex; align-items: center; }
+.separator::before, .separator::after { content: ""; flex: 1; height: 1px; background: #222; }
+.separator-text { padding: 0 15px; color: #444; font-size: 14px; font-weight: bold; }
+
+/* GŁÓWNY PRZYCISK MODALA */
+.btn-rust-main {
+    background: #cd412b !important; color: #fff !important;
+    width: 100%; padding: 15px; font-weight: bold; font-size: 18px;
+    text-transform: uppercase; border: none; cursor: pointer;
+}
+
+/* PRZYCISK GOOGLE */
+.btn-google {
+    background: #fff !important; color: #000 !important;
+    width: 100%; padding: 12px; display: flex; align-items: center; 
+    justify-content: center; gap: 10px; font-weight: bold; margin-top: 10px; border: none;
+}
+
+/* INPUTY */
+.form-group { margin-bottom: 20px; }
+.form-group label { display: block; font-size: 11px; color: #666; margin-bottom: 5px; font-weight: bold; }
+input { 
+    width: 100%; padding: 12px; background: #080808 !important; 
+    border: 1px solid #222 !important; color: white !important; outline: none;
+}
+
+/* X ZAMYKANIA */
+.close-btn { position: absolute; right: 20px; top: 15px; color: #444 !important; font-size: 30px; cursor: pointer !important; user-select: none; }
