@@ -1,28 +1,32 @@
 body { background-color: #0a0a0a; color: #e0e0e0; font-family: 'Segoe UI', sans-serif; margin: 0; padding-top: 100px; }
 
-/* Styl dla paska weryfikacji */
 .verify-banner {
     position: fixed;
     top: 70px;
     left: 0;
     right: 0;
-    background: #ff9800;
-    color: black;
-    text-align: center;
-    padding: 10px;
-    font-size: 13px;
-    font-weight: bold;
-    z-index: 999;
-}
-.verify-banner button {
-    background: black;
+    background: #cd412b;
     color: white;
+    text-align: center;
+    padding: 12px;
+    font-size: 14px;
+    z-index: 999;
+    border-bottom: 2px solid rgba(0,0,0,0.2);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+}
+
+.verify-banner button {
+    background: white;
+    color: #cd412b;
     border: none;
-    padding: 3px 10px;
-    margin-left: 10px;
+    padding: 5px 12px;
     cursor: pointer;
-    border-radius: 3px;
-    font-size: 11px;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 12px;
 }
 
 .top-bar { position: fixed; top: 0; left: 0; right: 0; height: 70px; background: #111; display: flex; justify-content: space-between; align-items: center; padding: 0 40px; border-bottom: 1px solid #222; z-index: 1000; }
