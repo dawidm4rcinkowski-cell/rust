@@ -101,6 +101,20 @@
         </div>
     </div>
 
+    <div id="playerModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="toggleModal('playerModal', false)">&times;</span>
+            <h2 id="modalPlayerName" class="rust-title" style="margin-bottom: 10px;">NICK GRACZA</h2>
+            <div class="player-stats-box">
+                <p>STATUS: <span id="modalPlayerStatus">---</span></p>
+                <p style="font-size: 14px; color: #666; margin-top: 20px; line-height: 1.4;">
+                    Statystyki szczegółowe (KDA/Godziny) są pobierane z globalnej bazy BattleMetrics.
+                </p>
+                <button class="btn-rust-main" id="btnPlayerStats" style="margin-top:20px;">PEŁNE STATYSTYKI</button>
+            </div>
+        </div>
+    </div>
+
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
