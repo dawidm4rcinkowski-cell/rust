@@ -3,25 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rust Team Manager - Leader System</title>
+    <title>Rust Team Manager Pro - Cloud Edition</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div class="server-info-top">
-        <span id="serverName">Ładowanie danych serwera...</span>
-        <span id="onlineCount" class="count-badge">0/0</span>
+    <div class="top-bar">
+        <div class="server-info">
+            <span id="serverName">Ładowanie danych serwera...</span>
+            <span id="onlineCount" class="count-badge">0/0</span>
+        </div>
+        
+        <div class="user-actions">
+            <div id="authButtons">
+                <button class="btn-outline" onclick="toggleModal('authModal', true)">ZALOGUJ / REJESTRACJA</button>
+            </div>
+            <div id="userInfo" style="display: none;">
+                <span id="userMail" style="font-size: 11px; color: #888;"></span>
+                <button class="btn-logout" onclick="logoutUser()">Wyloguj</button>
+            </div>
+            <button class="btn-open" onclick="toggleModal('teamModal', true)">+ STWÓRZ TEAM</button>
+        </div>
     </div>
-
-    <button class="btn-open" onclick="toggleModal('teamModal', true)">+ STWÓRZ TEAM</button>
 
     <div class="main-content">
         <div class="section-header">
-            <h2>LISTA DRUŻYN</h2>
-            <button onclick="clearAllTeams()" class="btn-clear-all">Wyczyść wszystko</button>
+            <h2>ZAREJESTROWANE DRUŻYNY</h2>
         </div>
-        
         <div id="teamsGrid" class="teams-container"></div>
+    </div>
+
+    <div id="authModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="toggleModal('authModal', false)">&times;</span>
+            <div id="authTabs">
+                <button class="tab-btn active" onclick="switchAuthTab('login')">Logowanie</button>
+                <button class="tab-btn" onclick="switchAuthTab('register')">Rejestracja</button>
+            </div>
+            <div id="authFields">
+                <div class="form-group">
+                    <label>E-MAIL</label>
+                    <input type="email" id="authEmail">
+                </div>
+                <div class="form-group">
+                    <label>HASŁO</label>
+                    <input type="password" id="authPassword">
+                </div>
+                <button class="btn-save" id="authSubmit" onclick="handleAuth()">ZALOGUJ SIĘ</button>
+            </div>
+        </div>
     </div>
 
     <div id="teamModal" class="modal">
@@ -30,42 +60,32 @@
             <h2>Nowy Projekt</h2>
             <div class="form-group">
                 <label>NAZWA TEAMU</label>
-                <input type="text" id="teamName" placeholder="np. Night Raid">
+                <input type="text" id="teamName">
+            </div>
+            <div class="form-group">
+                <label>LINK DO LOGO (URL)</label>
+                <input type="text" id="teamLogo" placeholder="http://...">
             </div>
             <div class="form-group">
                 <label>KRATKA BAZY</label>
-                <input type="text" id="baseGrid" placeholder="np. G14">
+                <input type="text" id="baseGrid">
             </div>
             <div class="form-group">
                 <label>HASŁO LIDERA (DO EDYCJI)</label>
-                <input type="password" id="leaderPass" placeholder="Zapamiętaj je!">
+                <input type="password" id="leaderPass">
             </div>
             <div class="form-group">
-                <label>GRACZE (NICKI ODDZIELONE PRZECINKIEM)</label>
-                <textarea id="teamPlayers" rows="3" placeholder="Gienek, Mirek, Zbychu"></textarea>
+                <label>GRACZE (NICKI PO PRZECINKU)</label>
+                <textarea id="teamPlayers" rows="3"></textarea>
             </div>
-            <button class="btn-save" onclick="addTeam()">ZAPISZ DRUŻYNĘ</button>
+            <button class="btn-save" onclick="addTeam()">ZAPISZ W CHMURZE</button>
         </div>
     </div>
 
-    <div id="editModal" class="modal">
-        <div class="modal-content">
-            <span class="close-btn" onclick="toggleModal('editModal', false)">&times;</span>
-            <h2>Zarządzaj Teamem</h2>
-            <input type="hidden" id="editIndex">
-            <div class="form-group">
-                <label>LISTA GRACZY (EDYCJA)</label>
-                <textarea id="editPlayers" rows="5"></textarea>
-            </div>
-            <div class="form-group">
-                <label>POTWIERDŹ HASŁEM LIDERA</label>
-                <input type="password" id="confirmPass" placeholder="Wpisz hasło tego teamu">
-            </div>
-            <button class="btn-save" style="background:#4CAF50" onclick="saveEdit()">ZAPISZ ZMIANY</button>
-            <button class="btn-danger" onclick="deleteSingleTeam()">USUŃ TEN TEAM</button>
-        </div>
-    </div>
-
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    
     <script src="app.js"></script>
 </body>
 </html>
