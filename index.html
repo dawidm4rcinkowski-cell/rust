@@ -1,35 +1,112 @@
-<div id="teamModal" class="modal">
-    <div class="modal-content">
-        <span class="close-btn" onclick="toggleModal('teamModal', false)">&times;</span>
-        <h2 style="display: flex; align-items: center; gap: 10px;">🛡️ NOWY TEAM</h2>
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rust Team Manager</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="verificationOverlay" class="full-overlay" style="display: none;">
+        <div class="overlay-content">
+            <h1>📧 Weryfikacja e-mail</h1>
+            <p>Kliknij link w wiadomości e-mail, aby odblokować stronę.</p>
+            <div class="overlay-buttons">
+                <button class="btn-check" onclick="manualCheckStatus()">SPRAWDŹ STATUS</button>
+                <button class="btn-save" onclick="resendVerifyEmail()">Wyślij link ponownie</button>
+                <button class="btn-outline" onclick="logoutUser()">Wyloguj się</button>
+            </div>
+            <div class="loader-small"></div>
+        </div>
+    </div>
+
+    <div class="top-bar">
+        <div class="server-info">
+            <span id="serverName">Ładowanie serwera...</span>
+            <span id="onlineCount" class="count-badge">0/0</span>
+            <button id="btnCreateTeam" class="btn-open" onclick="toggleModal('teamModal', true)" style="display: none; margin-left: 15px;">+ STWÓRZ TEAM</button>
+        </div>
         
-        <div class="team-header-input">
-            <div class="avatar-upload" onclick="document.getElementById('teamAvatarInput').click()">
-                <input type="file" id="teamAvatarInput" hidden accept="image/*" onchange="previewAvatar(this)">
-                <div id="avatarPreview" class="avatar-placeholder">
-                    <svg viewBox="0 0 24 24" width="30" fill="#444"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+        <div class="user-actions">
+            <div id="authButtons">
+                <button class="btn-outline" onclick="toggleModal('authModal', true)">ZALOGUJ / REJESTRACJA</button>
+            </div>
+            <div id="userInfo" style="display: none; align-items: center; gap: 15px;">
+                <span id="userDisplayName" class="user-nick-display"></span>
+                <button class="btn-logout" onclick="logoutUser()">Wyloguj</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="mainContent">
+        <div id="teamsGrid" class="teams-container"></div>
+    </div>
+
+    <div id="authModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="toggleModal('authModal', false)">&times;</span>
+            <div id="authTabs">
+                <button class="tab-btn active" onclick="switchAuthTab('login')">Logowanie</button>
+                <button class="tab-btn" onclick="switchAuthTab('register')">Rejestracja</button>
+            </div>
+            <div id="authFields">
+                <div class="form-group" id="nickGroup" style="display: none;">
+                    <label>NICK (LOGIN)</label>
+                    <input type="text" id="authNick">
+                </div>
+                <div class="form-group">
+                    <label id="loginLabel">E-MAIL</label>
+                    <input type="text" id="authEmail">
+                </div>
+                <div class="form-group">
+                    <label>HASŁO</label>
+                    <input type="password" id="authPassword">
+                </div>
+                <button class="btn-save" id="authSubmit" onclick="handleAuth()">ZALOGUJ SIĘ</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="teamModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="toggleModal('teamModal', false)">&times;</span>
+            <h2>🛡️ NOWY TEAM</h2>
+            
+            <div class="team-header-input">
+                <div class="avatar-upload" onclick="document.getElementById('teamAvatarInput').click()">
+                    <input type="file" id="teamAvatarInput" hidden accept="image/*" onchange="previewAvatar(this)">
+                    <div id="avatarPreview" class="avatar-placeholder">
+                        <svg viewBox="0 0 24 24" width="30" fill="#444"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+                    </div>
+                </div>
+                <div class="form-group" style="flex: 1;">
+                    <label>NAZWA TEAMU</label>
+                    <input type="text" id="teamName" placeholder="Nazwa ekipy">
                 </div>
             </div>
-            <div class="form-group" style="flex: 1;">
-                <label>NAZWA TEAMU</label>
-                <input type="text" id="teamName" placeholder="Nazwa Twojej ekipy">
+
+            <div class="form-group">
+                <label>KRATKA BAZY (GRID)</label>
+                <input type="text" id="baseGrid" placeholder="np. A15">
             </div>
-        </div>
 
-        <div class="form-group">
-            <label>KRATKA BAZY (GRID)</label>
-            <input type="text" id="baseGrid" placeholder="np. M21">
-        </div>
-
-        <div class="form-group">
-            <label>DODAJ GRACZY</label>
-            <div class="player-input-wrapper">
-                <input type="text" id="playerSearch" placeholder="Wpisz nick i naciśnij Enter">
-                <button type="button" class="btn-add-player" onclick="addPlayerTag()">+</button>
+            <div class="form-group">
+                <label>DODAJ GRACZY (Enter = Dodaj)</label>
+                <div class="player-input-wrapper">
+                    <input type="text" id="playerSearch" placeholder="Nick gracza">
+                    <button type="button" class="btn-add-player" onclick="addPlayerTag()">+</button>
+                </div>
+                <div id="playersTagsList" class="tags-container"></div>
             </div>
-            <div id="playersTagsList" class="tags-container"></div>
-        </div>
 
-        <button class="btn-save" onclick="addTeam()">UTWÓRZ DRUŻYNĘ</button>
+            <button class="btn-save" onclick="addTeam()">UTWÓRZ DRUŻYNĘ</button>
+        </div>
     </div>
-</div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
