@@ -1,3 +1,4 @@
+// CONFIGURATION
 const firebaseConfig = {
     apiKey: "AIzaSyB74-e1hA8JW31YhdR_ZwgF-wfKdb3aqL4",
     authDomain: "ruscik-159d4.firebaseapp.com",
@@ -10,79 +11,83 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const auth = firebase.auth();
-
 const SERVER_ID = '3344761';
-let authMode = 'login';
 
+// MODALS
 function toggleModal(id, show) {
-    const modal = document.getElementById(id);
-    if(modal) modal.style.display = show ? 'block' : 'none';
+    const m = document.getElementById(id);
+    if(m) m.style.display = show ? 'block' : 'none';
 }
 
 function switchAuthTab(mode) {
-    authMode = mode;
-    const nickGroup = document.getElementById('nickGroup');
-    const tLogin = document.getElementById('tab-login');
-    const tRegister = document.getElementById('tab-register');
-    if(nickGroup) nickGroup.style.display = mode === 'login' ? 'none' : 'block';
-    tLogin.classList.toggle('active', mode === 'login');
-    tRegister.classList.toggle('active', mode === 'register');
+    const n = document.getElementById('nickGroup');
+    const tl = document.getElementById('tab-login');
+    const tr = document.getElementById('tab-register');
+    if(n) n.style.display = mode === 'login' ? 'none' : 'block';
+    tl.classList.toggle('active', mode === 'login');
+    tr.classList.toggle('active', mode === 'register');
 }
 
+// AUTH ACTIONS
 async function handleAuth() {
-    const email = document.getElementById('authEmail').value;
-    const pass = document.getElementById('authPassword').value;
-    const nick = document.getElementById('authNick').value;
+    const e = document.getElementById('authEmail').value;
+    const p = document.getElementById('authPassword').value;
+    const ni = document.getElementById('authNick').value;
     try {
-        if (authMode === 'login') {
-            await auth.signInWithEmailAndPassword(email, pass);
+        if (document.getElementById('tab-login').classList.contains('active')) {
+            await auth.signInWithEmailAndPassword(e, p);
         } else {
-            const res = await auth.createUserWithEmailAndPassword(email, pass);
-            await res.user.updateProfile({ displayName: nick });
+            const res = await auth.createUserWithEmailAndPassword(e, p);
+            await res.user.updateProfile({ displayName: ni });
             await res.user.sendEmailVerification();
-            alert("Zweryfikuj e-mail!");
+            alert("Zweryfikuj maila!");
         }
         toggleModal('authModal', false);
-    } catch (e) { alert(e.message); }
+    } catch (err) { alert(err.message); }
 }
 
 async function loginWithGoogle() {
     try {
         await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
         toggleModal('authModal', false);
-    } catch (e) { alert(e.message); }
+    } catch (err) { alert(err.message); }
 }
 
 function logoutUser() { auth.signOut().then(() => location.reload()); }
 
 // MONITOROWANIE STANU
 auth.onAuthStateChanged(user => {
-    const btnCreate = document.getElementById('btnCreateTeam');
-    const authBox = document.getElementById('authButtons');
-    const userBox = document.getElementById('userInfo');
-    
+    const btn = document.getElementById('btnCreateTeam');
+    const ab = document.getElementById('authButtons');
+    const ui = document.getElementById('userInfo');
     if (user) {
-        if(authBox) authBox.style.display = 'none';
-        if(userBox) userBox.style.display = 'flex';
+        if(ab) ab.style.display = 'none';
+        if(ui) ui.style.display = 'flex';
         document.getElementById('userDisplayName').innerText = user.displayName || user.email;
-        
-        // WYMUSZENIE POKAZANIA PRZYCISKU
-        if(btnCreate) {
-            btnCreate.style.setProperty('display', 'inline-block', 'important');
-        }
+        if(btn) btn.style.setProperty('display', 'inline-block', 'important');
     } else {
-        if(authBox) authBox.style.display = 'block';
-        if(userBox) userBox.style.display = 'none';
-        if(btnCreate) btnCreate.style.display = 'none';
+        if(ab) ab.style.display = 'block';
+        if(ui) ui.style.display = 'none';
+        if(btn) btn.style.display = 'none';
     }
 });
 
+// TEAM ACTION (TEST)
+function addTeam() {
+    const name = document.getElementById('teamName').value;
+    if(!name) return alert("Podaj nazwę teamu!");
+    alert("Tworzenie teamu: " + name);
+    // Tutaj dodasz zapis do Firebase db.collection('teams').add(...)
+    toggleModal('teamModal', false);
+}
+
+// SERVER DATA
 async function fetchServerStatus() {
     try {
         const res = await fetch(`https://api.battlemetrics.com/servers/${SERVER_ID}`);
-        const data = await res.json();
-        document.getElementById('serverName').innerText = data.data.attributes.name;
-        document.getElementById('onlineCount').innerText = `${data.data.attributes.players}/${data.data.attributes.maxPlayers}`;
+        const d = await res.json();
+        document.getElementById('serverName').innerText = d.data.attributes.name;
+        document.getElementById('onlineCount').innerText = `${d.data.attributes.players}/${d.data.attributes.maxPlayers}`;
     } catch (e) { console.log(e); }
 }
 fetchServerStatus();
