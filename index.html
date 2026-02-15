@@ -8,9 +8,17 @@
 </head>
 <body>
 
-    <div id="verifyBanner" class="verify-banner" style="display: none;">
-        <span>📧 Twoje konto nie jest zweryfikowane! Sprawdź e-mail (też SPAM).</span>
-        <button onclick="resendVerifyEmail()">Wyślij kod ponownie</button>
+    <div id="verificationOverlay" class="full-overlay" style="display: none;">
+        <div class="overlay-content">
+            <h1>📧 Weryfikacja wymagana</h1>
+            <p>Aby korzystać z serwisu, musisz potwierdzić swój adres e-mail.</p>
+            <p>Sprawdź swoją skrzynkę (również folder <strong>SPAM</strong>).</p>
+            <div class="overlay-buttons">
+                <button class="btn-save" onclick="resendVerifyEmail()">Wyślij link ponownie</button>
+                <button class="btn-outline" onclick="logoutUser()">Wyloguj się</button>
+            </div>
+            <p style="margin-top: 20px; font-size: 12px; color: #666;">Po kliknięciu w link w mailu, odśwież stronę.</p>
+        </div>
     </div>
 
     <div class="top-bar">
@@ -31,7 +39,9 @@
         </div>
     </div>
 
-    <div id="teamsGrid" class="teams-container"></div>
+    <div id="mainContent">
+        <div id="teamsGrid" class="teams-container"></div>
+    </div>
 
     <div id="authModal" class="modal">
         <div class="modal-content">
