@@ -7,6 +7,7 @@ const firebaseConfig = {
     appId: "1:127501998256:web:99a73947e20f1eecb2c375"
 };
 
+// Inicjalizacja Firebase
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const auth = firebase.auth();
@@ -14,9 +15,9 @@ const auth = firebase.auth();
 const SERVER_ID = '3344761';
 let playersOnlineNames = [];
 let authMode = 'login';
-let checkInterval = null; // Do automatycznego sprawdzania maila
+let checkInterval = null; // Do automatycznego sprawdzania statusu maila
 
-// --- AUTORYZACJA ---
+// --- 1. SYSTEM AUTORYZACJI (LOGOWANIE / REJESTRACJA) ---
 
 function switchAuthTab(mode) {
     authMode = mode;
@@ -35,6 +36,7 @@ async function handleAuth() {
     try {
         if (authMode === 'login') {
             let finalEmail = emailOrLogin;
+            // Logowanie loginem zamiast mailem
             if (!emailOrLogin.includes('@')) {
                 const userDoc = await db.collection("users").doc(emailOrLogin.toLowerCase()).get();
                 if (!userDoc.exists) throw new Error("Nie znaleziono takiego loginu.");
@@ -42,20 +44,26 @@ async function handleAuth() {
             }
             await auth.signInWithEmailAndPassword(finalEmail, pass);
         } else {
-            if (!nick) throw new Error("Nick jest wymagany!");
+            // Rejestracja
+            if (!nick || nick.length < 3) throw new Error("Nick musi mieć min. 3 znaki!");
             const nickLower = nick.toLowerCase();
             const check = await db.collection("users").doc(nickLower).get();
-            if (check.exists) throw new Error("Login zajęty!");
+            if (check.exists) throw new Error("Ten login jest już zajęty!");
 
             const res = await auth.createUserWithEmailAndPassword(emailOrLogin, pass);
+            
+            // WYSYŁKA MAILA WERYFIKACYJNEGO
             await res.user.sendEmailVerification();
-            alert("Konto założone! Potwierdź e-mail w swojej poczcie.");
+            alert("Konto utworzone! Wysłaliśmy link weryfikacyjny na Twój e-mail.");
 
+            // Zapisanie powiązania Login -> Email w bazie
             await db.collection("users").doc(nickLower).set({ email: emailOrLogin, uid: res.user.uid });
             await res.user.updateProfile({ displayName: nick });
         }
         toggleModal('authModal', false);
-    } catch (e) { alert(e.message); }
+    } catch (e) { 
+        alert(e.message); 
+    }
 }
 
 async function loginWithGoogle() {
@@ -66,6 +74,86 @@ async function loginWithGoogle() {
     } catch (e) { alert(e.message); }
 }
 
+// --- 2. ZARZĄDZANIE STANEM UŻYTKOWNIKA ---
+
+auth.onAuthStateChanged(user => {
+    const btnCreateTeam = document.getElementById('btnCreateTeam');
+    const verificationOverlay = document.getElementById('verificationOverlay');
+    const mainContent = document.getElementById('mainContent');
+
+    if (user) {
+        document.getElementById('authButtons').style.display = 'none';
+        document.getElementById('userInfo').style.display = 'flex';
+        
+        // Sprawdzenie czy zweryfikowany (Google traktujemy jako zweryfikowane)
+        const isVerified = user.emailVerified || (user.providerData[0] && user.providerData[0].providerId === 'google.com');
+
+        if (isVerified) {
+            if (verificationOverlay) verificationOverlay.style.display = 'none';
+            if (mainContent) mainContent.style.opacity = '1';
+            if (btnCreateTeam) btnCreateTeam.style.display = 'inline-block';
+            clearInterval(checkInterval); 
+            checkInterval = null;
+        } else {
+            // BLOKADA STRONY
+            if (verificationOverlay) verificationOverlay.style.display = 'flex';
+            if (mainContent) mainContent.style.opacity = '0';
+            if (btnCreateTeam) btnCreateTeam.style.display = 'none';
+            
+            // AUTOMATYCZNE ODBLOKOWANIE (sprawdzanie w tle co 3 sekundy)
+            if(!checkInterval) {
+                checkInterval = setInterval(async () => {
+                    await user.reload(); 
+                    if (auth.currentUser.emailVerified) {
+                        location.reload(); 
+                    }
+                }, 3000);
+            }
+        }
+        checkUserNick(user);
+    } else {
+        // Użytkownik wylogowany
+        document.getElementById('authButtons').style.display = 'block';
+        document.getElementById('userInfo').style.display = 'none';
+        if (verificationOverlay) verificationOverlay.style.display = 'none';
+        if (mainContent) mainContent.style.opacity = '1';
+        if (btnCreateTeam) btnCreateTeam.style.display = 'none';
+        clearInterval(checkInterval);
+        checkInterval = null;
+    }
+});
+
+function resendVerifyEmail() {
+    const user = auth.currentUser;
+    const btn = event.target;
+
+    if (user) {
+        user.sendEmailVerification()
+            .then(() => {
+                alert("📧 Wysłano! Sprawdź pocztę (również SPAM).");
+                // Cooldown na przycisku (60 sekund)
+                btn.disabled = true;
+                let sec = 60;
+                const timer = setInterval(() => {
+                    btn.innerText = `Odczekaj (${sec}s)`;
+                    sec--;
+                    if(sec < 0) {
+                        clearInterval(timer);
+                        btn.disabled = false;
+                        btn.innerText = "Wyślij link ponownie";
+                    }
+                }, 1000);
+            })
+            .catch((error) => {
+                if (error.code === 'auth/too-many-requests') {
+                    alert("⚠️ Firebase blokuje zbyt częste wysyłanie. Spróbuj za chwilę.");
+                } else {
+                    alert("❌ Błąd: " + error.message);
+                }
+            });
+    }
+}
+
 async function checkUserNick(user) {
     if (!user) return;
     const userQuery = await db.collection("users").where("uid", "==", user.uid).get();
@@ -73,10 +161,8 @@ async function checkUserNick(user) {
         toggleModal('authModal', false);
         toggleModal('onboardingModal', true);
     } else {
-        toggleModal('authModal', false); 
         const foundNick = userQuery.docs[0].id;
         document.getElementById('userDisplayName').innerText = foundNick;
-        if (user.displayName !== foundNick) await user.updateProfile({ displayName: foundNick });
     }
 }
 
@@ -94,70 +180,24 @@ async function saveOnboardingNick() {
     } catch (e) { alert(e.message); }
 }
 
-// GŁÓWNA LOGIKA BLOKADY I AUTOMATYCZNEGO SPRAWDZANIA
-auth.onAuthStateChanged(user => {
-    const btnCreateTeam = document.getElementById('btnCreateTeam');
-    const verificationOverlay = document.getElementById('verificationOverlay');
-    const mainContent = document.getElementById('mainContent');
-
-    if (user) {
-        document.getElementById('authButtons').style.display = 'none';
-        document.getElementById('userInfo').style.display = 'flex';
-        
-        const isVerified = user.emailVerified || user.providerData[0].providerId === 'google.com';
-
-        if (isVerified) {
-            if (verificationOverlay) verificationOverlay.style.display = 'none';
-            if (mainContent) mainContent.style.opacity = '1';
-            if (btnCreateTeam) btnCreateTeam.style.display = 'inline-block';
-            clearInterval(checkInterval); // Wyłączamy zegar jeśli już OK
-        } else {
-            if (verificationOverlay) verificationOverlay.style.display = 'flex';
-            if (mainContent) mainContent.style.opacity = '0';
-            if (btnCreateTeam) btnCreateTeam.style.display = 'none';
-            
-            // AUTOMATYCZNE SPRAWDZANIE (co 3 sekundy)
-            if(!checkInterval) {
-                checkInterval = setInterval(async () => {
-                    await user.reload(); // Odśwież dane z Firebase
-                    if (user.emailVerified) {
-                        location.reload(); // Jeśli kliknął link, odśwież stronę
-                    }
-                }, 3000);
-            }
-        }
-        checkUserNick(user);
-    } else {
-        document.getElementById('authButtons').style.display = 'block';
-        document.getElementById('userInfo').style.display = 'none';
-        if (verificationOverlay) verificationOverlay.style.display = 'none';
-        if (mainContent) mainContent.style.opacity = '1';
-        if (btnCreateTeam) btnCreateTeam.style.display = 'none';
-        clearInterval(checkInterval);
-    }
-});
-
-function resendVerifyEmail() {
-    auth.currentUser.sendEmailVerification()
-        .then(() => alert("E-mail został wysłany ponownie!"));
-}
-
 function logoutUser() { 
     clearInterval(checkInterval);
     auth.signOut().then(() => location.reload()); 
 }
 
-// --- RUST LOGIKA ---
+// --- 3. LOGIKA RUST I BATTLEMETRICS ---
 
 async function fetchServerStatus() {
     try {
         const res = await fetch(`https://api.battlemetrics.com/servers/${SERVER_ID}?include=player`);
         const data = await res.json();
-        document.getElementById('serverName').innerText = data.data.attributes.name;
-        document.getElementById('onlineCount').innerText = `${data.data.attributes.players}/${data.data.attributes.maxPlayers}`;
-        playersOnlineNames = (data.included || []).map(p => p.attributes.name.toLowerCase());
-        listenToTeams();
-    } catch (e) { console.error(e); }
+        if (data.data) {
+            document.getElementById('serverName').innerText = data.data.attributes.name;
+            document.getElementById('onlineCount').innerText = `${data.data.attributes.players}/${data.data.attributes.maxPlayers}`;
+            playersOnlineNames = (data.included || []).map(p => p.attributes.name.toLowerCase());
+            listenToTeams();
+        }
+    } catch (e) { console.error("BattleMetrics Error:", e); }
 }
 
 function addTeam() {
@@ -171,7 +211,14 @@ function addTeam() {
         owner: user.uid,
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
     };
-    db.collection("teams").add(teamData).then(() => toggleModal('teamModal', false));
+    if (!teamData.name || !teamData.grid) return alert("Uzupełnij nazwę i kratkę!");
+    
+    db.collection("teams").add(teamData).then(() => {
+        toggleModal('teamModal', false);
+        document.getElementById('teamName').value = "";
+        document.getElementById('baseGrid').value = "";
+        document.getElementById('teamPlayers').value = "";
+    });
 }
 
 function listenToTeams() {
@@ -192,7 +239,11 @@ function listenToTeams() {
     });
 }
 
-function toggleModal(id, show) { document.getElementById(id).style.display = show ? 'block' : 'none'; }
+function toggleModal(id, show) { 
+    const modal = document.getElementById(id);
+    if(modal) modal.style.display = show ? 'block' : 'none'; 
+}
 
+// Start aplikacji
 fetchServerStatus();
-setInterval(fetchServerStatus, 30000);
+setInterval(fetchServerStatus, 30000); // Odświeżaj status serwera co 30s
