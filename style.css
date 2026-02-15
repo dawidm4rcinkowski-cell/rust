@@ -1,73 +1,48 @@
-body { background-color: #0a0a0a; color: #e0e0e0; font-family: 'Segoe UI', sans-serif; margin: 0; padding-top: 100px; }
+/* Układ nagłówka modala */
+.team-header-input { display: flex; gap: 15px; align-items: flex-end; margin-bottom: 15px; }
 
-.full-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+/* Styl Avatara */
+.avatar-upload {
+    width: 60px;
+    height: 60px;
     background: #0a0a0a;
-    z-index: 9999;
+    border: 2px dashed #333;
+    border-radius: 8px;
     display: flex;
     justify-content: center;
     align-items: center;
-    text-align: center;
-}
-
-.overlay-content {
-    max-width: 400px;
-    padding: 40px;
-    background: #111;
-    border-top: 5px solid #cd412b;
-    border-radius: 8px;
-}
-
-.overlay-buttons { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; }
-
-/* Styl dla przycisku sprawdzania */
-.btn-check {
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    padding: 15px;
-    font-weight: bold;
-    font-size: 14px;
-    border-radius: 4px;
     cursor: pointer;
+    overflow: hidden;
     transition: 0.2s;
 }
-.btn-check:hover { background-color: #45a049; }
+.avatar-upload:hover { border-color: #cd412b; }
+.avatar-upload img { width: 100%; height: 100%; object-fit: cover; }
 
-.loader-small {
-    border: 2px solid #222;
-    border-top: 2px solid #cd412b;
-    border-radius: 50%;
-    width: 20px;
-    height: 20px;
-    animation: spin 1s linear infinite;
-    display: inline-block;
+/* System Tagów Graczy */
+.player-input-wrapper { display: flex; gap: 5px; }
+.player-input-wrapper button { background: #333; border: none; color: white; padding: 0 15px; border-radius: 4px; cursor: pointer; }
+
+.tags-container { 
+    display: flex; 
+    flex-wrap: wrap; 
+    gap: 8px; 
+    margin-top: 10px; 
+    min-height: 30px; 
+    padding: 10px;
+    background: #0d0d0d;
+    border-radius: 4px;
 }
 
-@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+.player-tag {
+    background: #222;
+    color: #eee;
+    padding: 5px 10px;
+    border-radius: 3px;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid #333;
+}
 
-.top-bar { position: fixed; top: 0; left: 0; right: 0; height: 70px; background: #111; display: flex; justify-content: space-between; align-items: center; padding: 0 40px; border-bottom: 1px solid #222; z-index: 1000; }
-.server-info { display: flex; align-items: center; }
-.count-badge { background: #222; padding: 5px 12px; border-radius: 4px; color: #4CAF50; margin-left: 10px; font-size: 14px; font-weight: bold; border: 1px solid #333; }
-.user-nick-display { font-size: 16px; color: #4CAF50; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
-.btn-outline { background: transparent; border: 1px solid #444; color: #888; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-size: 11px; }
-.btn-open { background-color: #cd412b; color: white; border: none; padding: 8px 16px; font-weight: bold; border-radius: 4px; cursor: pointer; font-size: 12px; transition: 0.2s; }
-.btn-logout { background: none; border: 1px solid #333; color: #555; font-size: 10px; cursor: pointer; padding: 5px 10px; border-radius: 3px; }
-.btn-google { width: 100%; background: white; color: black; border: none; padding: 10px; border-radius: 4px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; }
-.teams-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 25px; padding: 20px 40px; }
-.team-box { background: #121212; min-height: 250px; border: 1px solid #1f1f1f; border-bottom: 5px solid #cd412b; padding: 20px; position: relative; }
-.player-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #1a1a1a; font-size: 13px; }
-.status-dot { height: 8px; width: 8px; border-radius: 50%; }
-.modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; }
-.modal-content { background: #1a1a1a; width: 320px; margin: 40px auto; padding: 30px; border-radius: 8px; border-top: 6px solid #cd412b; position: relative; }
-.form-group label { display: block; font-size: 10px; color: #555; margin-bottom: 5px; margin-top: 10px; text-transform: uppercase; }
-.form-group input, textarea { width: 100%; padding: 10px; background: #0a0a0a; border: 1px solid #222; color: white; box-sizing: border-box; }
-.btn-save { width: 100%; padding: 14px; background: #cd412b; color: white; border: none; font-weight: bold; cursor: pointer; margin-top: 15px; }
-.close-btn { position: absolute; right: 20px; top: 15px; cursor: pointer; font-size: 24px; color: #444; }
-#authTabs { display: flex; margin-bottom: 20px; border-bottom: 1px solid #333; }
-.tab-btn { flex: 1; padding: 10px; background: none; border: none; color: #555; cursor: pointer; font-weight: bold; }
-.tab-btn.active { color: #cd412b; border-bottom: 2px solid #cd412b; }
+.player-tag span { cursor: pointer; color: #cd412b; font-weight: bold; }
