@@ -1,86 +1,39 @@
-body { 
-    background-color: #0a0a0a; 
-    color: #e0e0e0; 
-    font-family: 'Segoe UI', sans-serif; 
-    margin: 0; 
-    padding-top: 100px; 
-}
+body { background-color: #0a0a0a; color: #e0e0e0; font-family: 'Segoe UI', sans-serif; margin: 0; padding-top: 100px; }
 
-.top-bar { 
-    position: fixed; 
-    top: 0; left: 0; right: 0; 
-    height: 70px; 
-    background: #111; 
-    display: flex; 
-    justify-content: space-between; 
-    align-items: center; 
-    padding: 0 40px; 
-    border-bottom: 1px solid #222; 
-    z-index: 1000; 
-}
+.top-bar { position: fixed; top: 0; left: 0; right: 0; height: 70px; background: #111; display: flex; justify-content: space-between; align-items: center; padding: 0 40px; border-bottom: 1px solid #222; z-index: 1000; }
 
-.count-badge { background: #222; padding: 3px 10px; border-radius: 4px; color: #4CAF50; margin-left: 10px; }
+.count-badge { background: #222; padding: 3px 10px; border-radius: 4px; color: #4CAF50; margin-left: 10px; font-size: 13px; }
 
-.btn-outline { background: transparent; border: 1px solid #444; color: #888; padding: 8px 15px; cursor: pointer; border-radius: 4px; }
+.btn-outline { background: transparent; border: 1px solid #444; color: #888; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-size: 11px; }
 
-.btn-open { background: #cd412b; color: white; border: none; padding: 10px 20px; font-weight: bold; cursor: pointer; border-radius: 4px; }
+.btn-open { background-color: #cd412b; color: white; border: none; padding: 10px 20px; font-weight: bold; border-radius: 4px; cursor: pointer; }
 
-.btn-google { 
-    width: 100%; 
-    background: white; 
-    color: black; 
-    border: none; 
-    padding: 10px; 
-    font-weight: bold; 
-    display: flex; 
-    align-items: center; 
-    justify-content: center; 
-    gap: 10px; 
-    cursor: pointer;
-    border-radius: 4px;
-}
+.btn-logout { background: none; border: 1px solid #333; color: #555; font-size: 10px; cursor: pointer; padding: 5px 10px; }
 
-.teams-container { 
-    display: grid; 
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); 
-    gap: 20px; 
-    padding: 20px 40px; 
-}
+.btn-google { width: 100%; background: white; color: black; border: none; padding: 10px; border-radius: 4px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; }
 
-.team-box { 
-    background: #121212; 
-    border: 1px solid #1f1f1f; 
-    border-bottom: 4px solid #cd412b; 
-    padding: 20px; 
-    position: relative;
-}
+.teams-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 25px; padding: 20px 40px; }
 
-.player-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #1a1a1a; font-size: 13px; }
+.team-box { background: #121212; min-height: 250px; border: 1px solid #1f1f1f; border-bottom: 5px solid #cd412b; padding: 20px; position: relative; }
+
+.player-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #1a1a1a; font-size: 13px; }
 
 .status-dot { height: 8px; width: 8px; border-radius: 50%; }
 
 .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; }
 
-.modal-content { 
-    background: #1a1a1a; 
-    width: 320px; 
-    margin: 50px auto; 
-    padding: 30px; 
-    border-radius: 8px; 
-    border-top: 5px solid #cd412b; 
-    position: relative; 
-}
+.modal-content { background: #1a1a1a; width: 320px; margin: 40px auto; padding: 30px; border-radius: 8px; border-top: 6px solid #cd412b; position: relative; }
 
-.form-group label { display: block; font-size: 10px; color: #555; margin-bottom: 5px; margin-top: 10px; }
+.form-group label { display: block; font-size: 10px; color: #555; margin-bottom: 5px; margin-top: 10px; text-transform: uppercase; }
 
 .form-group input, textarea { width: 100%; padding: 10px; background: #0a0a0a; border: 1px solid #222; color: white; box-sizing: border-box; }
 
-.btn-save { width: 100%; padding: 12px; background: #cd412b; color: white; border: none; font-weight: bold; cursor: pointer; margin-top: 15px; }
+.btn-save { width: 100%; padding: 14px; background: #cd412b; color: white; border: none; font-weight: bold; cursor: pointer; margin-top: 15px; }
 
-.close-btn { position: absolute; right: 15px; top: 10px; cursor: pointer; color: #444; font-size: 20px; }
+.close-btn { position: absolute; right: 20px; top: 15px; cursor: pointer; font-size: 24px; color: #444; }
 
-#authTabs { display: flex; margin-bottom: 15px; }
+#authTabs { display: flex; margin-bottom: 20px; border-bottom: 1px solid #333; }
 
-.tab-btn { flex: 1; padding: 10px; background: none; border: none; color: #444; cursor: pointer; font-weight: bold; }
+.tab-btn { flex: 1; padding: 10px; background: none; border: none; color: #555; cursor: pointer; font-weight: bold; }
 
 .tab-btn.active { color: #cd412b; border-bottom: 2px solid #cd412b; }
