@@ -1,125 +1,28 @@
-/* Reset i tło */
-body {
-    background-color: #0a0a0a;
-    color: #e0e0e0;
-    font-family: 'Segoe UI', sans-serif;
-    margin: 0;
-    padding: 100px 40px 40px 40px;
-}
+body { background-color: #0a0a0a; color: #e0e0e0; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 100px 40px; }
 
-/* Górny pasek */
-.server-info-top {
-    position: fixed;
-    top: 20px;
-    left: 20px;
-    font-size: 13px;
-    font-weight: bold;
-    color: #666;
-    z-index: 1000;
-    letter-spacing: 1px;
-}
+.top-bar { position: fixed; top: 0; left: 0; right: 0; height: 70px; background: #111; display: flex; justify-content: space-between; align-items: center; padding: 0 40px; border-bottom: 1px solid #222; z-index: 1000; }
+.server-info { font-size: 14px; font-weight: bold; color: #fff; }
+.count-badge { background: #222; padding: 3px 10px; border-radius: 4px; color: #4CAF50; margin-left: 10px; }
 
-#serverName { color: #fff; margin-right: 10px; }
-.count-badge { background: #222; padding: 3px 10px; border-radius: 4px; color: #4CAF50; }
+.user-actions { display: flex; align-items: center; gap: 15px; }
+.btn-outline { background: transparent; border: 1px solid #444; color: #888; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-size: 11px; }
+.btn-outline:hover { border-color: #cd412b; color: #fff; }
+.btn-open { background-color: #cd412b; color: white; border: none; padding: 10px 20px; font-weight: bold; border-radius: 4px; cursor: pointer; }
+.btn-logout { background: none; border: 1px solid #333; color: #555; font-size: 10px; margin-left: 10px; cursor: pointer; padding: 3px 7px; }
 
-/* Przycisk tworzenia */
-.btn-open {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background-color: #cd412b;
-    color: white;
-    border: none;
-    padding: 14px 28px;
-    font-weight: bold;
-    border-radius: 4px;
-    cursor: pointer;
-    z-index: 1000;
-    transition: background 0.2s;
-}
-.btn-open:hover { background-color: #e64a33; }
-
-/* Grid teamów */
-.main-content { max-width: 1400px; margin: 0 auto; }
-.section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid #1a1a1a;
-    margin-bottom: 40px;
-}
-.section-header h2 { color: #333; font-size: 16px; letter-spacing: 3px; }
-
-.teams-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 25px;
-}
-
-/* Kontener Teamu (Kwadrat) */
-.team-box {
-    background: #121212;
-    aspect-ratio: 1 / 1;
-    border: 1px solid #1f1f1f;
-    border-bottom: 5px solid #cd412b;
-    padding: 25px;
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    transition: transform 0.2s, background 0.2s;
-}
-.team-box:hover { background: #181818; transform: translateY(-5px); }
-
-.team-box h3 { margin: 0 0 20px 0; font-size: 20px; color: #cd412b; text-transform: uppercase; }
-
-.grid-bg-text {
-    position: absolute;
-    bottom: 5px;
-    right: 10px;
-    font-size: 60px;
-    font-weight: 900;
-    color: #fff;
-    opacity: 0.03;
-    pointer-events: none;
-}
-
-/* Lista graczy */
-.player-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 6px 0;
-    border-bottom: 1px solid #1a1a1a;
-    font-size: 14px;
-}
+.teams-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 25px; }
+.team-box { background: #121212; min-height: 280px; border: 1px solid #1f1f1f; border-bottom: 5px solid #cd412b; padding: 25px; position: relative; display: flex; flex-direction: column; align-items: center; }
+.team-logo-img { width: 60px; height: 60px; object-fit: contain; margin-bottom: 10px; border-radius: 5px; }
+.player-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #1a1a1a; font-size: 13px; width: 100%; }
 .status-dot { height: 7px; width: 7px; border-radius: 50%; }
 
-.btn-edit-trigger {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background: transparent;
-    border: 1px solid #333;
-    color: #444;
-    font-size: 10px;
-    padding: 3px 7px;
-    cursor: pointer;
-}
-.btn-edit-trigger:hover { color: #fff; border-color: #666; }
-
-/* Modal */
 .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 2000; }
-.modal-content {
-    background: #1a1a1a; width: 340px; margin: 80px auto; padding: 35px;
-    border-radius: 8px; border-top: 6px solid #cd412b; position: relative;
-}
-.close-btn { position: absolute; right: 20px; top: 15px; cursor: pointer; font-size: 28px; color: #444; }
-.form-group { margin-bottom: 18px; }
-.form-group label { display: block; font-size: 10px; color: #555; margin-bottom: 6px; letter-spacing: 1px; }
-.form-group input, .form-group textarea {
-    width: 100%; padding: 12px; background: #0a0a0a; border: 1px solid #222; color: white; box-sizing: border-box; font-family: inherit;
-}
+.modal-content { background: #1a1a1a; width: 320px; margin: 40px auto; padding: 30px; border-radius: 8px; border-top: 6px solid #cd412b; position: relative; }
+.form-group label { display: block; font-size: 10px; color: #555; margin-bottom: 5px; margin-top: 10px; }
+.form-group input, textarea { width: 100%; padding: 10px; background: #0a0a0a; border: 1px solid #222; color: white; box-sizing: border-box; }
+.btn-save { width: 100%; padding: 14px; background: #cd412b; color: white; border: none; font-weight: bold; cursor: pointer; margin-top: 15px; }
+.close-btn { position: absolute; right: 20px; top: 15px; cursor: pointer; font-size: 24px; color: #444; }
 
-.btn-save { width: 100%; padding: 14px; background: #cd412b; color: white; border: none; font-weight: bold; cursor: pointer; }
-.btn-danger { width: 100%; background: none; border: 1px solid #331111; color: #552222; padding: 10px; margin-top: 15px; cursor: pointer; font-size: 11px; }
-.btn-clear-all { background: none; border: none; color: #222; cursor: pointer; font-size: 11px; }
+#authTabs { display: flex; margin-bottom: 20px; border-bottom: 1px solid #333; }
+.tab-btn { flex: 1; padding: 10px; background: none; border: none; color: #555; cursor: pointer; }
+.tab-btn.active { color: #cd412b; border-bottom: 2px solid #cd412b; }
