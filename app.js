@@ -7,7 +7,7 @@ const firebaseConfig = {
     appId: "1:127501998256:web:99a73947e20f1eecb2c375"
 };
 
-// Inicjalizacja Firebase
+// Inicjalizacja
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const auth = firebase.auth();
@@ -15,9 +15,9 @@ const auth = firebase.auth();
 const SERVER_ID = '3344761';
 let playersOnlineNames = [];
 let authMode = 'login';
-let checkInterval = null; // Do automatycznego sprawdzania statusu maila
+let checkInterval = null; 
 
-// --- 1. SYSTEM AUTORYZACJI (LOGOWANIE / REJESTRACJA) ---
+// --- 1. SYSTEM AUTORYZACJI ---
 
 function switchAuthTab(mode) {
     authMode = mode;
@@ -36,7 +36,6 @@ async function handleAuth() {
     try {
         if (authMode === 'login') {
             let finalEmail = emailOrLogin;
-            // Logowanie loginem zamiast mailem
             if (!emailOrLogin.includes('@')) {
                 const userDoc = await db.collection("users").doc(emailOrLogin.toLowerCase()).get();
                 if (!userDoc.exists) throw new Error("Nie znaleziono takiego loginu.");
@@ -44,26 +43,20 @@ async function handleAuth() {
             }
             await auth.signInWithEmailAndPassword(finalEmail, pass);
         } else {
-            // Rejestracja
             if (!nick || nick.length < 3) throw new Error("Nick musi mieć min. 3 znaki!");
             const nickLower = nick.toLowerCase();
             const check = await db.collection("users").doc(nickLower).get();
             if (check.exists) throw new Error("Ten login jest już zajęty!");
 
             const res = await auth.createUserWithEmailAndPassword(emailOrLogin, pass);
-            
-            // WYSYŁKA MAILA WERYFIKACYJNEGO
             await res.user.sendEmailVerification();
-            alert("Konto utworzone! Wysłaliśmy link weryfikacyjny na Twój e-mail.");
+            alert("Konto utworzone! Potwierdź e-mail w swojej poczcie.");
 
-            // Zapisanie powiązania Login -> Email w bazie
             await db.collection("users").doc(nickLower).set({ email: emailOrLogin, uid: res.user.uid });
             await res.user.updateProfile({ displayName: nick });
         }
         toggleModal('authModal', false);
-    } catch (e) { 
-        alert(e.message); 
-    }
+    } catch (e) { alert(e.message); }
 }
 
 async function loginWithGoogle() {
@@ -74,7 +67,7 @@ async function loginWithGoogle() {
     } catch (e) { alert(e.message); }
 }
 
-// --- 2. ZARZĄDZANIE STANEM UŻYTKOWNIKA ---
+// --- 2. LOGIKA BLOKADY I AUTOMATYCZNEGO ODBLOKOWANIA ---
 
 auth.onAuthStateChanged(user => {
     const btnCreateTeam = document.getElementById('btnCreateTeam');
@@ -85,34 +78,36 @@ auth.onAuthStateChanged(user => {
         document.getElementById('authButtons').style.display = 'none';
         document.getElementById('userInfo').style.display = 'flex';
         
-        // Sprawdzenie czy zweryfikowany (Google traktujemy jako zweryfikowane)
-        const isVerified = user.emailVerified || (user.providerData[0] && user.providerData[0].providerId === 'google.com');
-
-        if (isVerified) {
-            if (verificationOverlay) verificationOverlay.style.display = 'none';
-            if (mainContent) mainContent.style.opacity = '1';
-            if (btnCreateTeam) btnCreateTeam.style.display = 'inline-block';
-            clearInterval(checkInterval); 
-            checkInterval = null;
-        } else {
-            // BLOKADA STRONY
-            if (verificationOverlay) verificationOverlay.style.display = 'flex';
-            if (mainContent) mainContent.style.opacity = '0';
-            if (btnCreateTeam) btnCreateTeam.style.display = 'none';
+        // Funkcja sprawdzająca status
+        const updateUI = () => {
+            const isVerified = user.emailVerified || (user.providerData[0] && user.providerData[0].providerId === 'google.com');
             
-            // AUTOMATYCZNE ODBLOKOWANIE (sprawdzanie w tle co 3 sekundy)
-            if(!checkInterval) {
-                checkInterval = setInterval(async () => {
-                    await user.reload(); 
-                    if (auth.currentUser.emailVerified) {
-                        location.reload(); 
-                    }
-                }, 3000);
+            if (isVerified) {
+                if (verificationOverlay) verificationOverlay.style.display = 'none';
+                if (mainContent) mainContent.style.opacity = '1';
+                if (btnCreateTeam) btnCreateTeam.style.display = 'inline-block';
+                clearInterval(checkInterval);
+                checkInterval = null;
+            } else {
+                if (verificationOverlay) verificationOverlay.style.display = 'flex';
+                if (mainContent) mainContent.style.opacity = '0';
+                if (btnCreateTeam) btnCreateTeam.style.display = 'none';
+
+                // Start zegara sprawdzającego (jeśli jeszcze nie działa)
+                if (!checkInterval) {
+                    checkInterval = setInterval(async () => {
+                        await user.reload(); // KLUCZOWE: Pobiera świeży status z Firebase
+                        if (auth.currentUser.emailVerified) {
+                            updateUI(); // Wywołaj ponowną zmianę UI
+                        }
+                    }, 3000);
+                }
             }
-        }
+        };
+
+        updateUI();
         checkUserNick(user);
     } else {
-        // Użytkownik wylogowany
         document.getElementById('authButtons').style.display = 'block';
         document.getElementById('userInfo').style.display = 'none';
         if (verificationOverlay) verificationOverlay.style.display = 'none';
@@ -125,32 +120,10 @@ auth.onAuthStateChanged(user => {
 
 function resendVerifyEmail() {
     const user = auth.currentUser;
-    const btn = event.target;
-
     if (user) {
         user.sendEmailVerification()
-            .then(() => {
-                alert("📧 Wysłano! Sprawdź pocztę (również SPAM).");
-                // Cooldown na przycisku (60 sekund)
-                btn.disabled = true;
-                let sec = 60;
-                const timer = setInterval(() => {
-                    btn.innerText = `Odczekaj (${sec}s)`;
-                    sec--;
-                    if(sec < 0) {
-                        clearInterval(timer);
-                        btn.disabled = false;
-                        btn.innerText = "Wyślij link ponownie";
-                    }
-                }, 1000);
-            })
-            .catch((error) => {
-                if (error.code === 'auth/too-many-requests') {
-                    alert("⚠️ Firebase blokuje zbyt częste wysyłanie. Spróbuj za chwilę.");
-                } else {
-                    alert("❌ Błąd: " + error.message);
-                }
-            });
+            .then(() => alert("📧 Wysłano ponownie! Sprawdź pocztę."))
+            .catch(e => alert("Błąd: " + e.message));
     }
 }
 
@@ -185,7 +158,7 @@ function logoutUser() {
     auth.signOut().then(() => location.reload()); 
 }
 
-// --- 3. LOGIKA RUST I BATTLEMETRICS ---
+// --- 3. RUST ---
 
 async function fetchServerStatus() {
     try {
@@ -197,12 +170,12 @@ async function fetchServerStatus() {
             playersOnlineNames = (data.included || []).map(p => p.attributes.name.toLowerCase());
             listenToTeams();
         }
-    } catch (e) { console.error("BattleMetrics Error:", e); }
+    } catch (e) { console.error(e); }
 }
 
 function addTeam() {
     const user = auth.currentUser;
-    if (!user || (!user.emailVerified && user.providerData[0].providerId !== 'google.com')) return;
+    if (!user || !user.emailVerified) return;
     
     const teamData = {
         name: document.getElementById('teamName').value,
@@ -211,14 +184,7 @@ function addTeam() {
         owner: user.uid,
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
     };
-    if (!teamData.name || !teamData.grid) return alert("Uzupełnij nazwę i kratkę!");
-    
-    db.collection("teams").add(teamData).then(() => {
-        toggleModal('teamModal', false);
-        document.getElementById('teamName').value = "";
-        document.getElementById('baseGrid').value = "";
-        document.getElementById('teamPlayers').value = "";
-    });
+    db.collection("teams").add(teamData).then(() => toggleModal('teamModal', false));
 }
 
 function listenToTeams() {
@@ -244,6 +210,5 @@ function toggleModal(id, show) {
     if(modal) modal.style.display = show ? 'block' : 'none'; 
 }
 
-// Start aplikacji
 fetchServerStatus();
-setInterval(fetchServerStatus, 30000); // Odświeżaj status serwera co 30s
+setInterval(fetchServerStatus, 30000);
