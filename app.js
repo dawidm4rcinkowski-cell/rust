@@ -47,9 +47,8 @@ async function handleAuth() {
             if (check.exists) throw new Error("Login zajęty!");
 
             const res = await auth.createUserWithEmailAndPassword(emailOrLogin, pass);
-            // WYSYŁKA MAILA WERYFIKACYJNEGO
             await res.user.sendEmailVerification();
-            alert("Konto założone! Wysłaliśmy link weryfikacyjny na e-mail.");
+            alert("Konto założone! Potwierdź e-mail przed korzystaniem ze strony.");
 
             await db.collection("users").doc(nickLower).set({ email: emailOrLogin, uid: res.user.uid });
             await res.user.updateProfile({ displayName: nick });
@@ -94,31 +93,36 @@ async function saveOnboardingNick() {
     } catch (e) { alert(e.message); }
 }
 
-// KLUCZOWE: SPRAWDZANIE STANU WERYFIKACJI
+// KLUCZOWE: SPRAWDZANIE STANU WERYFIKACJI I BLOKADA STRONY
 auth.onAuthStateChanged(user => {
     const btnCreateTeam = document.getElementById('btnCreateTeam');
-    const verifyBanner = document.getElementById('verifyBanner');
+    const verificationOverlay = document.getElementById('verificationOverlay');
+    const mainContent = document.getElementById('mainContent');
 
     if (user) {
         document.getElementById('authButtons').style.display = 'none';
         document.getElementById('userInfo').style.display = 'flex';
         
-        // Google jest autoweryfikowane
+        // Logika weryfikacji
         const isVerified = user.emailVerified || user.providerData[0].providerId === 'google.com';
 
         if (isVerified) {
-            btnCreateTeam.style.display = 'inline-block';
-            verifyBanner.style.display = 'none';
+            if (verificationOverlay) verificationOverlay.style.display = 'none';
+            if (mainContent) mainContent.style.opacity = '1';
+            if (btnCreateTeam) btnCreateTeam.style.display = 'inline-block';
         } else {
-            btnCreateTeam.style.display = 'none';
-            verifyBanner.style.display = 'flex';
+            // BLOKADA JEŚLI NIEZWERYFIKOWANY
+            if (verificationOverlay) verificationOverlay.style.display = 'flex';
+            if (mainContent) mainContent.style.opacity = '0'; // Całkowite ukrycie treści
+            if (btnCreateTeam) btnCreateTeam.style.display = 'none';
         }
         checkUserNick(user);
     } else {
         document.getElementById('authButtons').style.display = 'block';
         document.getElementById('userInfo').style.display = 'none';
-        btnCreateTeam.style.display = 'none';
-        verifyBanner.style.display = 'none';
+        if (verificationOverlay) verificationOverlay.style.display = 'none';
+        if (mainContent) mainContent.style.opacity = '1';
+        if (btnCreateTeam) btnCreateTeam.style.display = 'none';
     }
 });
 
@@ -129,7 +133,7 @@ function resendVerifyEmail() {
 
 function logoutUser() { auth.signOut().then(() => location.reload()); }
 
-// --- RUST ---
+// --- RUST LOGIKA ---
 
 async function fetchServerStatus() {
     try {
@@ -143,14 +147,15 @@ async function fetchServerStatus() {
 }
 
 function addTeam() {
-    if (!auth.currentUser || (!auth.currentUser.emailVerified && auth.currentUser.providerData[0].providerId !== 'google.com')) {
-        return alert("Najpierw zweryfikuj e-mail!");
+    const user = auth.currentUser;
+    if (!user || (!user.emailVerified && user.providerData[0].providerId !== 'google.com')) {
+        return alert("Musisz zweryfikować e-mail!");
     }
     const teamData = {
         name: document.getElementById('teamName').value,
         grid: document.getElementById('baseGrid').value.toUpperCase(),
         players: document.getElementById('teamPlayers').value.split(',').map(p => p.trim()).filter(p => p),
-        owner: auth.currentUser.uid,
+        owner: user.uid,
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
     };
     db.collection("teams").add(teamData).then(() => toggleModal('teamModal', false));
