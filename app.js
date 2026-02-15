@@ -1,3 +1,4 @@
+// TWOJE DANE Z FIREBASE
 const firebaseConfig = {
     apiKey: "AIzaSyB74-e1hA8JW31YhdR_ZwgF-wfKdb3aqL4",
     authDomain: "ruscik-159d4.firebaseapp.com",
@@ -15,7 +16,7 @@ const SERVER_ID = '3344761';
 let playersOnlineNames = [];
 let authMode = 'login';
 
-// --- SYSTEM LOGOWANIA I REJESTRACJI ---
+// --- LOGIKA AUTORYZACJI ---
 
 function switchAuthTab(mode) {
     authMode = mode;
@@ -34,16 +35,14 @@ async function handleAuth() {
     try {
         if (authMode === 'login') {
             let finalEmail = emailOrLogin;
-            // Logowanie loginem: szukamy maila w Firestore
             if (!emailOrLogin.includes('@')) {
                 const userDoc = await db.collection("users").doc(emailOrLogin.toLowerCase()).get();
-                if (!userDoc.exists) throw new Error("Nie znaleziono takiego loginu.");
+                if (!userDoc.exists) throw new Error("Nie znaleziono loginu.");
                 finalEmail = userDoc.data().email;
             }
             await auth.signInWithEmailAndPassword(finalEmail, pass);
         } else {
-            // Rejestracja z loginem
-            if (!nick) throw new Error("Login jest wymagany!");
+            if (!nick) throw new Error("Nick jest wymagany!");
             const nickLower = nick.toLowerCase();
             const check = await db.collection("users").doc(nickLower).get();
             if (check.exists) throw new Error("Login zajęty!");
@@ -67,25 +66,30 @@ async function loginWithGoogle() {
 async function checkUserNick(user) {
     if (!user) return;
     const userQuery = await db.collection("users").where("uid", "==", user.uid).get();
+    
     if (userQuery.empty) {
         toggleModal('authModal', false);
         toggleModal('onboardingModal', true);
     } else {
-        const nick = userQuery.docs[0].id;
-        if (user.displayName !== nick) await user.updateProfile({ displayName: nick });
-        document.getElementById('userDisplayName').innerText = nick;
+        const foundNick = userQuery.docs[0].id;
+        document.getElementById('userDisplayName').innerText = foundNick;
     }
 }
 
 async function saveOnboardingNick() {
     const nick = document.getElementById('onboardingNick').value;
-    if (nick.length < 3) return alert("Min. 3 znaki!");
     const user = auth.currentUser;
+    if (nick.length < 3) return alert("Nick musi mieć min. 3 znaki!");
+
     try {
-        await db.collection("users").doc(nick.toLowerCase()).set({ email: user.email, uid: user.uid });
+        const nickLower = nick.toLowerCase();
+        const check = await db.collection("users").doc(nickLower).get();
+        if (check.exists) return alert("Nick zajęty!");
+
+        await db.collection("users").doc(nickLower).set({ email: user.email, uid: user.uid });
         await user.updateProfile({ displayName: nick });
         location.reload();
-    } catch (e) { alert("Błąd zapisu."); }
+    } catch (e) { alert("Błąd!"); }
 }
 
 auth.onAuthStateChanged(user => {
@@ -94,7 +98,7 @@ auth.onAuthStateChanged(user => {
     if (user) checkUserNick(user);
 });
 
-// --- POBIERANIE STATUSU RUST I DRUŻYN ---
+// --- RUST & BATTLEMETRICS ---
 
 async function fetchServerStatus() {
     try {
@@ -104,7 +108,7 @@ async function fetchServerStatus() {
         document.getElementById('onlineCount').innerText = `${data.data.attributes.players}/${data.data.attributes.maxPlayers}`;
         playersOnlineNames = (data.included || []).map(p => p.attributes.name.toLowerCase());
         listenToTeams();
-    } catch (e) { console.log("BattleMetrics Error"); }
+    } catch (e) { console.log("Błąd API"); }
 }
 
 function addTeam() {
@@ -130,7 +134,7 @@ function listenToTeams() {
                 const online = playersOnlineNames.includes(p.toLowerCase());
                 return `<div class="player-row"><span>${p}</span><span class="status-dot" style="background:${online ? '#4CAF50' : '#ff4444'}"></span></div>`;
             }).join('');
-            box.innerHTML = `<h3>${team.name}</h3><div>${pHTML}</div><div style="position:absolute; bottom:5px; right:10px; font-size:40px; font-weight:900; opacity:0.05;">${team.grid}</div>`;
+            box.innerHTML = `<h3>${team.name}</h3>${pHTML}<div style="position:absolute; bottom:5px; right:10px; font-size:40px; font-weight:900; opacity:0.05;">${team.grid}</div>`;
             container.appendChild(box);
         });
     });
