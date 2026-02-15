@@ -22,7 +22,6 @@
                 </div>
             </div>
         </div>
-        
         <div class="top-bar-right">
             <div id="authButtons">
                 <button class="btn-text-only" onclick="toggleModal('authModal', true); switchAuthTab('login')">ZALOGUJ SIĘ</button>
@@ -36,8 +35,10 @@
         </div>
     </div>
 
-    <div id="mainContent" class="container">
-        <div id="teamsGrid" class="teams-grid"></div>
+    <div class="container">
+        <h2 class="section-title">ZAREJESTROWANE DRUŻYNY</h2>
+        <div id="teamsGrid" class="teams-grid">
+            </div>
     </div>
 
     <div id="authModal" class="modal">
@@ -68,27 +69,35 @@
     </div>
 
     <div id="teamModal" class="modal">
-        <div class="modal-content">
+        <div class="modal-content team-modal-wide">
             <span class="close-btn" onclick="toggleModal('teamModal', false)">&times;</span>
-            <h2 class="rust-title">🛡️ NOWA DRUŻYNA</h2>
-            
-            <div class="form-group">
-                <label>NAZWA TEAMU</label>
-                <input type="text" id="teamName" placeholder="np. AK-47 Masters">
+            <h2 class="rust-title">🛡️ UTWÓRZ DRUŻYNĘ</h2>
+            <div class="team-setup-row">
+                <div class="avatar-section">
+                    <label>LOGO</label>
+                    <div class="avatar-picker" onclick="document.getElementById('avatarInput').click()">
+                        <input type="file" id="avatarInput" hidden accept="image/png, image/jpeg" onchange="handleAvatarPreview(this)">
+                        <img id="avatarPreview" src="">
+                        <span id="avatarPlaceholder">📸</span>
+                    </div>
+                </div>
+                <div style="flex:1">
+                    <div class="form-group">
+                        <label>NAZWA TEAMU</label>
+                        <input type="text" id="teamName">
+                    </div>
+                    <div class="form-group">
+                        <label>GRID BAZY</label>
+                        <input type="text" id="baseGrid">
+                    </div>
+                </div>
             </div>
-            
             <div class="form-group">
-                <label>KRATKA BAZY (GRID)</label>
-                <input type="text" id="baseGrid" placeholder="np. M21">
+                <label>DODAJ CZŁONKÓW (ENTER)</label>
+                <input type="text" id="playerInput">
+                <div id="playersTagsList" class="tags-container"></div>
             </div>
-
-            <div class="form-group">
-                <label>DODAJ CZŁONKÓW</label>
-                <input type="text" id="playerSearch" placeholder="Wpisz nick i naciśnij Enter">
-                <div id="playersTagsList" class="tags-container" style="margin-top:10px;"></div>
-            </div>
-
-            <button class="btn-rust-main" onclick="addTeam()">UTWÓRZ DRUŻYNĘ</button>
+            <button class="btn-rust-main" onclick="saveTeam()">ZAPISZ DRUŻYNĘ</button>
         </div>
     </div>
 
