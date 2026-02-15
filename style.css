@@ -1,6 +1,5 @@
 body { background-color: #0a0a0a; color: #e0e0e0; font-family: 'Segoe UI', sans-serif; margin: 0; padding-top: 100px; }
 
-/* EKRAN BLOKADY */
 .full-overlay {
     position: fixed;
     top: 0;
@@ -23,12 +22,19 @@ body { background-color: #0a0a0a; color: #e0e0e0; font-family: 'Segoe UI', sans-
     border-radius: 8px;
 }
 
-.overlay-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    margin-top: 20px;
+.overlay-buttons { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+
+.loader-small {
+    border: 2px solid #222;
+    border-top: 2px solid #cd412b;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    animation: spin 1s linear infinite;
+    display: inline-block;
 }
+
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
 .top-bar { position: fixed; top: 0; left: 0; right: 0; height: 70px; background: #111; display: flex; justify-content: space-between; align-items: center; padding: 0 40px; border-bottom: 1px solid #222; z-index: 1000; }
 .server-info { display: flex; align-items: center; }
