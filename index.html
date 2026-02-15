@@ -12,17 +12,17 @@
         <div class="server-info">
             <span id="serverName">Serwer info...</span>
             <span id="onlineCount" class="count-badge">0/0</span>
+            <button id="btnCreateTeam" class="btn-open" onclick="toggleModal('teamModal', true)" style="display: none; margin-left: 15px;">+ STWÓRZ TEAM</button>
         </div>
         
         <div class="user-actions">
             <div id="authButtons">
                 <button class="btn-outline" onclick="toggleModal('authModal', true)">ZALOGUJ / REJESTRACJA</button>
             </div>
-            <div id="userInfo" style="display: none; align-items: center; gap: 10px;">
-                <span id="userDisplayName" style="font-size: 13px; color: #4CAF50; font-weight: bold;"></span>
+            <div id="userInfo" style="display: none; align-items: center; gap: 15px;">
+                <span id="userDisplayName" class="user-nick-display"></span>
                 <button class="btn-logout" onclick="logoutUser()">Wyloguj</button>
             </div>
-            <button id="btnCreateTeam" class="btn-open" onclick="toggleModal('teamModal', true)" style="display: none;">+ STWÓRZ TEAM</button>
         </div>
     </div>
 
