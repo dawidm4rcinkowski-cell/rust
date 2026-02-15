@@ -10,14 +10,15 @@
 
     <div id="verificationOverlay" class="full-overlay" style="display: none;">
         <div class="overlay-content">
-            <h1>📧 Weryfikacja wymagana</h1>
-            <p>Aby korzystać z serwisu, musisz potwierdzić swój adres e-mail.</p>
-            <p>Sprawdź swoją skrzynkę (również folder <strong>SPAM</strong>).</p>
+            <h1>📧 Weryfikacja e-mail</h1>
+            <p>Wysłaliśmy link aktywacyjny na Twój adres.</p>
+            <p><strong>Kliknij go, a ta strona odblokuje się automatycznie.</strong></p>
             <div class="overlay-buttons">
                 <button class="btn-save" onclick="resendVerifyEmail()">Wyślij link ponownie</button>
                 <button class="btn-outline" onclick="logoutUser()">Wyloguj się</button>
             </div>
-            <p style="margin-top: 20px; font-size: 12px; color: #666;">Po kliknięciu w link w mailu, odśwież stronę.</p>
+            <div class="loader-small" style="margin-top: 20px;"></div>
+            <p style="font-size: 11px; color: #555;">Czekam na potwierdzenie...</p>
         </div>
     </div>
 
