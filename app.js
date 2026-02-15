@@ -17,7 +17,7 @@ let tempPlayers = [];
 let currentAvatarBase64 = null;
 let checkInterval = null;
 
-// --- PODGLĄD AVATARA ---
+// --- AVATAR ---
 function previewAvatar(input) {
     if (input.files && input.files[0]) {
         const reader = new FileReader();
@@ -29,7 +29,7 @@ function previewAvatar(input) {
     }
 }
 
-// --- SYSTEM TAGÓW GRACZY ---
+// --- SYSTEM GRACZY ---
 function addPlayerTag() {
     const input = document.getElementById('playerSearch');
     const nick = input.value.trim();
@@ -48,58 +48,34 @@ function removePlayerTag(nick) {
 function renderTags() {
     const container = document.getElementById('playersTagsList');
     container.innerHTML = tempPlayers.map(p => `
-        <div class="player-tag">
-            ${p} <span onclick="removePlayerTag('${p}')">&times;</span>
-        </div>
+        <div class="player-tag">${p} <span onclick="removePlayerTag('${p}')">&times;</span></div>
     `).join('');
 }
 
-// Obsługa Entera
-document.addEventListener('DOMContentLoaded', () => {
-    const ps = document.getElementById('playerSearch');
-    if(ps) {
-        ps.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                addPlayerTag();
-            }
-        });
-    }
-});
-
-// --- DODAWANIE DRUŻYNY ---
+// --- TWORZENIE TEAMU ---
 async function addTeam() {
     const user = auth.currentUser;
-    if (!user || !user.emailVerified) return alert("Błąd weryfikacji!");
+    if (!user || !user.emailVerified) return alert("Najpierw zweryfikuj email!");
 
     const name = document.getElementById('teamName').value.trim();
     const grid = document.getElementById('baseGrid').value.trim().toUpperCase();
 
-    if (!name || !grid) return alert("Uzupełnij nazwę i kratkę!");
-
-    const teamData = {
-        name,
-        grid,
-        players: tempPlayers,
-        avatar: currentAvatarBase64,
-        owner: user.uid,
-        leaderName: user.displayName,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    };
+    if (!name || !grid) return alert("Wypełnij dane!");
 
     try {
-        await db.collection("teams").add(teamData);
+        await db.collection("teams").add({
+            name, grid, players: tempPlayers, avatar: currentAvatarBase64,
+            owner: user.uid, leaderName: user.displayName,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
         tempPlayers = [];
         currentAvatarBase64 = null;
-        document.getElementById('avatarPreview').innerHTML = '<svg viewBox="0 0 24 24" width="30" fill="#444"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>';
-        document.getElementById('teamName').value = "";
-        document.getElementById('baseGrid').value = "";
         renderTags();
         toggleModal('teamModal', false);
     } catch (e) { alert(e.message); }
 }
 
-// --- RESZTA FUNKCJI (Logowanie, BattleMetrics itp.) ---
+// --- STAN UŻYTKOWNIKA ---
 auth.onAuthStateChanged(user => {
     const btnCreateTeam = document.getElementById('btnCreateTeam');
     const overlay = document.getElementById('verificationOverlay');
@@ -111,30 +87,33 @@ auth.onAuthStateChanged(user => {
             clearInterval(checkInterval);
         } else {
             overlay.style.display = 'flex';
-            btnCreateTeam.style.display = 'none';
             if(!checkInterval) {
                 checkInterval = setInterval(async () => {
                     await user.reload();
                     if(auth.currentUser.emailVerified) location.reload();
-                }, 3000);
+                }, 4000);
             }
         }
-        checkUserNick(user);
         document.getElementById('authButtons').style.display = 'none';
         document.getElementById('userInfo').style.display = 'flex';
+        document.getElementById('userDisplayName').innerText = user.displayName || "Gracz";
     } else {
         document.getElementById('authButtons').style.display = 'block';
         document.getElementById('userInfo').style.display = 'none';
-        btnCreateTeam.style.display = 'none';
-        overlay.style.display = 'none';
     }
 });
 
-async function checkUserNick(user) {
-    const q = await db.collection("users").where("uid", "==", user.uid).get();
-    if(!q.empty) document.getElementById('userDisplayName').innerText = q.docs[0].id;
+// --- RĘCZNA WERYFIKACJA ---
+async function manualCheckStatus() {
+    const user = auth.currentUser;
+    if (user) {
+        await user.reload();
+        if (user.emailVerified) location.reload();
+        else alert("Nadal brak weryfikacji. Kliknij link w mailu!");
+    }
 }
 
+// --- BATTLEMETRICS ---
 async function fetchServerStatus() {
     try {
         const res = await fetch(`https://api.battlemetrics.com/servers/${SERVER_ID}?include=player`);
@@ -154,18 +133,16 @@ function listenToTeams() {
             const team = doc.data();
             const box = document.createElement('div');
             box.className = 'team-box';
-            let playersHtml = team.players.map(p => {
+            let pHTML = team.players.map(p => {
                 const online = playersOnlineNames.includes(p.toLowerCase());
                 return `<div class="player-row"><span>${p}</span><span class="status-dot" style="background:${online?'#4CAF50':'#ff4444'}"></span></div>`;
             }).join('');
-            
             box.innerHTML = `
                 <div class="team-card-header">
                     ${team.avatar ? `<img src="${team.avatar}" class="team-card-avatar">` : `<div class="team-card-avatar" style="background:#222"></div>`}
                     <h3>${team.name}</h3>
                 </div>
-                ${playersHtml}
-                <div class="grid-bg">${team.grid}</div>
+                ${pHTML}
             `;
             container.appendChild(box);
         });
