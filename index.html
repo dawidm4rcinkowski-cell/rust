@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rust Team Manager - Leader System</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="server-info-top">
+        <span id="serverName">Ładowanie danych serwera...</span>
+        <span id="onlineCount" class="count-badge">0/0</span>
+    </div>
+
+    <button class="btn-open" onclick="toggleModal('teamModal', true)">+ STWÓRZ TEAM</button>
+
+    <div class="main-content">
+        <div class="section-header">
+            <h2>LISTA DRUŻYN</h2>
+            <button onclick="clearAllTeams()" class="btn-clear-all">Wyczyść wszystko</button>
+        </div>
+        
+        <div id="teamsGrid" class="teams-container"></div>
+    </div>
+
+    <div id="teamModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="toggleModal('teamModal', false)">&times;</span>
+            <h2>Nowy Projekt</h2>
+            <div class="form-group">
+                <label>NAZWA TEAMU</label>
+                <input type="text" id="teamName" placeholder="np. Night Raid">
+            </div>
+            <div class="form-group">
+                <label>KRATKA BAZY</label>
+                <input type="text" id="baseGrid" placeholder="np. G14">
+            </div>
+            <div class="form-group">
+                <label>HASŁO LIDERA (DO EDYCJI)</label>
+                <input type="password" id="leaderPass" placeholder="Zapamiętaj je!">
+            </div>
+            <div class="form-group">
+                <label>GRACZE (NICKI ODDZIELONE PRZECINKIEM)</label>
+                <textarea id="teamPlayers" rows="3" placeholder="Gienek, Mirek, Zbychu"></textarea>
+            </div>
+            <button class="btn-save" onclick="addTeam()">ZAPISZ DRUŻYNĘ</button>
+        </div>
+    </div>
+
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="toggleModal('editModal', false)">&times;</span>
+            <h2>Zarządzaj Teamem</h2>
+            <input type="hidden" id="editIndex">
+            <div class="form-group">
+                <label>LISTA GRACZY (EDYCJA)</label>
+                <textarea id="editPlayers" rows="5"></textarea>
+            </div>
+            <div class="form-group">
+                <label>POTWIERDŹ HASŁEM LIDERA</label>
+                <input type="password" id="confirmPass" placeholder="Wpisz hasło tego teamu">
+            </div>
+            <button class="btn-save" style="background:#4CAF50" onclick="saveEdit()">ZAPISZ ZMIANY</button>
+            <button class="btn-danger" onclick="deleteSingleTeam()">USUŃ TEN TEAM</button>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
