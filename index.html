@@ -9,28 +9,19 @@
 </head>
 <body>
 
-    <div id="verificationOverlay" class="full-overlay" style="display: none;">
-        <div class="overlay-content">
-            <h1 class="rust-title">📧 WERYFIKACJA</h1>
-            <p>Sprawdź swoją pocztę i kliknij link aktywacyjny.</p>
-            <div class="overlay-buttons">
-                <button class="btn-rust-main" onclick="manualCheckStatus()">SPRAWDŹ STATUS</button>
-                <button class="btn-outline" onclick="resendVerifyEmail()">WYŚLIJ PONOWNIE</button>
-                <button class="btn-logout-minimal" onclick="logoutUser()">WYLOGUJ</button>
-            </div>
-        </div>
-    </div>
-
     <div class="top-bar">
         <div class="server-info">
             <div class="status-dot"></div>
-            <span id="serverName">POŁĄCZENIE...</span>
-            <span id="onlineCount" class="badge">0/0</span>
+            <div class="server-meta">
+                <span id="serverName">ŁĄCZENIE Z SERWEREM...</span>
+                <span id="onlineCount" class="badge">0/0</span>
+            </div>
             <button id="btnCreateTeam" class="btn-rust-sm" onclick="toggleModal('teamModal', true)" style="display: none;">+ NOWY TEAM</button>
         </div>
+        
         <div class="user-area">
             <div id="authButtons">
-                <button class="btn-rust-sm" onclick="toggleModal('authModal', true)">ZALOGUJ SIĘ</button>
+                <button class="btn-rust-sm" onclick="toggleModal('authModal', true)">ZALOGUJ SIĘ / REJESTRACJA</button>
             </div>
             <div id="userInfo" style="display: none;">
                 <span id="userDisplayName"></span>
@@ -46,26 +37,33 @@
     <div id="authModal" class="modal">
         <div class="modal-content">
             <span class="close-btn" onclick="toggleModal('authModal', false)">&times;</span>
+            
             <div class="auth-tabs">
                 <button id="tab-login" class="tab-btn active" onclick="switchAuthTab('login')">LOGOWANIE</button>
                 <button id="tab-register" class="tab-btn" onclick="switchAuthTab('register')">REJESTRACJA</button>
             </div>
+            
             <div id="nickGroup" class="form-group" style="display: none;">
                 <label>TWÓJ NICK</label>
                 <input type="text" id="authNick" placeholder="Nick z gry">
             </div>
             <div class="form-group">
                 <label>E-MAIL</label>
-                <input type="email" id="authEmail">
+                <input type="email" id="authEmail" placeholder="email@przyklad.pl">
             </div>
             <div class="form-group">
                 <label>HASŁO</label>
                 <input type="password" id="authPassword">
             </div>
+            
             <button class="btn-rust-main" onclick="handleAuth()">POTWIERDŹ</button>
-            <div class="divider"><span>LUB</span></div>
+            
+            <div class="separator">
+                <span class="separator-text">LUB</span>
+            </div>
+            
             <button class="btn-google" onclick="loginWithGoogle()">
-                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="16"> KONTYNUUJ PRZEZ GOOGLE
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18"> KONTYNUUJ PRZEZ GOOGLE
             </button>
         </div>
     </div>
@@ -74,30 +72,7 @@
         <div class="modal-content">
             <span class="close-btn" onclick="toggleModal('teamModal', false)">&times;</span>
             <h2 class="rust-title">🛡️ UTWÓRZ DRUŻYNĘ</h2>
-            <div class="team-header-row">
-                <div class="avatar-upload" onclick="document.getElementById('teamAvatarInput').click()">
-                    <input type="file" id="teamAvatarInput" hidden accept="image/*" onchange="previewAvatar(this)">
-                    <div id="avatarPreview">📸</div>
-                </div>
-                <div class="form-group" style="flex:1">
-                    <label>NAZWA TEAMU</label>
-                    <input type="text" id="teamName">
-                </div>
             </div>
-            <div class="form-group">
-                <label>KRATKA BAZY (np. L12)</label>
-                <input type="text" id="baseGrid">
-            </div>
-            <div class="form-group">
-                <label>DODAJ CZŁONKÓW (NICK + ENTER)</label>
-                <div class="tag-input-box">
-                    <input type="text" id="playerSearch" placeholder="Wpisz i dodaj...">
-                    <button onclick="addPlayerTag()">+</button>
-                </div>
-                <div id="playersTagsList" class="tags-container"></div>
-            </div>
-            <button class="btn-rust-main" onclick="addTeam()">STWÓRZ TEAM</button>
-        </div>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
