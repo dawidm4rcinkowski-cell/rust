@@ -10,21 +10,25 @@
 <body>
 
     <div class="top-bar">
-        <div class="server-info">
+        <div class="top-bar-left">
             <div class="status-dot"></div>
             <div class="server-meta">
-                <span id="serverName">ŁĄCZENIE Z SERWEREM...</span>
-                <span id="onlineCount" class="badge">0/0</span>
+                <span id="serverName">ŁĄCZENIE...</span>
+                <div class="server-row-bottom">
+                    <span id="onlineCount" class="badge">0/0</span>
+                    <button id="btnCreateTeam" class="btn-nav-rust" onclick="toggleModal('teamModal', true)" style="display: none;">+ STWÓRZ TEAM</button>
+                </div>
             </div>
-            <button id="btnCreateTeam" class="btn-rust-sm" onclick="toggleModal('teamModal', true)" style="display: none;">+ NOWY TEAM</button>
         </div>
         
-        <div class="user-area">
+        <div class="top-bar-right">
             <div id="authButtons">
-                <button class="btn-rust-sm" onclick="toggleModal('authModal', true)">ZALOGUJ SIĘ / REJESTRACJA</button>
+                <button class="btn-text-only" onclick="toggleModal('authModal', true); switchAuthTab('login')">ZALOGUJ SIĘ</button>
+                <span class="nav-divider">|</span>
+                <button class="btn-text-only" onclick="toggleModal('authModal', true); switchAuthTab('register')">ZAREJESTRUJ SIĘ</button>
             </div>
             <div id="userInfo" style="display: none;">
-                <span id="userDisplayName"></span>
+                <span id="userDisplayName" class="user-nick"></span>
                 <button class="btn-logout-sm" onclick="logoutUser()">WYLOGUJ</button>
             </div>
         </div>
@@ -71,8 +75,9 @@
     <div id="teamModal" class="modal">
         <div class="modal-content">
             <span class="close-btn" onclick="toggleModal('teamModal', false)">&times;</span>
-            <h2 class="rust-title">🛡️ UTWÓRZ DRUŻYNĘ</h2>
-            </div>
+            <h2 class="rust-title">🛡️ NOWA DRUŻYNA</h2>
+            <button class="btn-rust-main">UTWÓRZ</button>
+        </div>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
