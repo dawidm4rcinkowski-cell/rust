@@ -17,7 +17,7 @@ let tempPlayers = [];
 let onlinePlayers = [];
 let editingTeamId = null;
 
-// --- MODALS & UI ---
+// --- FUNKCJE MODALI ---
 function toggleModal(id, show) {
     const modal = document.getElementById(id);
     if (modal) {
@@ -33,7 +33,7 @@ function switchAuthTab(mode) {
     document.getElementById('tab-register').classList.toggle('active', !isLogin);
 }
 
-// --- AUTHENTICATION ---
+// --- AUTORYZACJA ---
 async function handleAuth() {
     const email = document.getElementById('authEmail').value;
     const pass = document.getElementById('authPassword').value;
@@ -62,7 +62,7 @@ async function loginWithGoogle() {
 
 function logoutUser() { auth.signOut().then(() => location.reload()); }
 
-// --- SERVER STATUS & ONLINE PLAYERS ---
+// --- BATTLEMETRICS (STATUS ONLINE) ---
 async function updateServerStatus() {
     try {
         const res = await fetch(`https://api.battlemetrics.com/servers/${SERVER_ID}?include=player`);
@@ -75,21 +75,29 @@ async function updateServerStatus() {
     } catch (e) { console.error(e); }
 }
 
-// --- PLAYER DETAILS (KDA / STATS) ---
+// --- NOWA FUNKCJA: POKAZYWANIE STATYSTYK GRACZA ---
 function showPlayerDetails(nick) {
     const isOnline = onlinePlayers.includes(nick.toLowerCase());
-    document.getElementById('modalPlayerName').innerText = nick;
-    document.getElementById('modalPlayerStatus').innerText = isOnline ? "ONLINE" : "OFFLINE";
-    document.getElementById('modalPlayerStatus').style.color = isOnline ? "#4CAF50" : "#666";
-    
-    // Przekierowanie do globalnych statystyk na BattleMetrics
+    const modalName = document.getElementById('modalPlayerName');
+    const modalStatus = document.getElementById('modalPlayerStatus');
+    const btnStats = document.getElementById('btnPlayerStats');
+
+    if (modalName) modalName.innerText = nick;
+    if (modalStatus) {
+        modalStatus.innerText = isOnline ? "ONLINE" : "OFFLINE";
+        modalStatus.style.color = isOnline ? "#4CAF50" : "#666";
+    }
+
+    // Link do BattleMetrics dla gracza
     const bmUrl = `https://www.battlemetrics.com/players?filter[search]=${encodeURIComponent(nick)}`;
-    document.getElementById('btnPlayerStats').onclick = () => window.open(bmUrl, '_blank');
-    
+    if (btnStats) {
+        btnStats.onclick = () => window.open(bmUrl, '_blank');
+    }
+
     toggleModal('playerModal', true);
 }
 
-// --- TEAM MANAGEMENT ---
+// --- POBIERANIE DRUŻYN ---
 function loadTeams() {
     db.collection("teams").orderBy("createdAt", "desc").onSnapshot(snap => {
         const grid = document.getElementById('teamsGrid');
@@ -102,9 +110,9 @@ function loadTeams() {
             const id = doc.id;
             const isLeader = currentUser && t.leaderId === currentUser.uid;
             
+            // Renderowanie członków z funkcją kliknięcia
             const membersHTML = t.members.map(m => {
                 const isOnline = onlinePlayers.includes(m.toLowerCase());
-                // Dodajemy onclick="showPlayerDetails"
                 return `
                     <div class="member-row" onclick="showPlayerDetails('${m}')">
                         <span>${m}</span>
@@ -123,7 +131,7 @@ function loadTeams() {
                         ${isLeader ? `<span class="edit-icon" onclick="prepareEditTeam('${id}')">⚙️</span>` : ''}
                     </div>
                     <div class="team-card-members">
-                        <label style="font-size:10px; color:#444;">SKŁAD (KLIKNIJ PO STATY):</label>
+                        <label style="font-size:10px; color:#444;">SKŁAD (KLIKNIJ PO PROFIL):</label>
                         ${membersHTML}
                     </div>
                 </div>`;
@@ -131,7 +139,7 @@ function loadTeams() {
     });
 }
 
-// FORM LOGIC
+// --- LOGIKA FORMULARZA TEAMU ---
 function handleAvatarPreview(input) {
     if (input.files && input.files[0]) {
         const reader = new FileReader();
@@ -217,12 +225,13 @@ function resetTeamForm() {
     document.getElementById('avatarPreview').style.display = 'none';
     document.getElementById('avatarPlaceholder').style.display = 'block';
     document.getElementById('playersTagsList').innerHTML = "";
-    document.querySelector('#teamModal .rust-title').innerText = "🛡️ UTWÓRZ DRUŻYNĘ";
+    document.querySelector('#teamModal .rust-title').innerText = "🛡️ DRUŻYNA";
 }
 
-// MONITOR STATE
+// MONITOROWANIE STANU
 auth.onAuthStateChanged(user => {
-    document.getElementById('btnCreateTeam').style.display = user ? 'inline-block' : 'none';
+    const btnCreate = document.getElementById('btnCreateTeam');
+    if(btnCreate) btnCreate.style.display = user ? 'inline-block' : 'none';
     document.getElementById('authButtons').style.display = user ? 'none' : 'block';
     document.getElementById('userInfo').style.display = user ? 'flex' : 'none';
     if(user) document.getElementById('userDisplayName').innerText = user.displayName || user.email;
