@@ -13,10 +13,12 @@
         <div class="top-bar-left">
             <div class="status-dot"></div>
             <div class="server-meta">
-                <span id="serverName">ŁĄCZENIE...</span>
+                <div class="server-row-top">
+                    <span id="serverName">ŁĄCZENIE...</span>
+                    <button id="btnCreateTeam" class="btn-nav-rust" onclick="toggleModal('teamModal', true)" style="display: none;">+ STWÓRZ TEAM</button>
+                </div>
                 <div class="server-row-bottom">
                     <span id="onlineCount" class="badge">0/0</span>
-                    <button id="btnCreateTeam" class="btn-nav-rust" style="display: none;">+ STWÓRZ TEAM</button>
                 </div>
             </div>
         </div>
@@ -51,7 +53,7 @@
             </div>
             <div class="form-group">
                 <label>E-MAIL</label>
-                <input type="email" id="authEmail" placeholder="email@przyklad.pl">
+                <input type="email" id="authEmail">
             </div>
             <div class="form-group">
                 <label>HASŁO</label>
@@ -69,11 +71,24 @@
         <div class="modal-content">
             <span class="close-btn" onclick="toggleModal('teamModal', false)">&times;</span>
             <h2 class="rust-title">🛡️ NOWA DRUŻYNA</h2>
+            
             <div class="form-group">
                 <label>NAZWA TEAMU</label>
-                <input type="text" id="teamName">
+                <input type="text" id="teamName" placeholder="np. AK-47 Masters">
             </div>
-            <button class="btn-rust-main">UTWÓRZ</button>
+            
+            <div class="form-group">
+                <label>KRATKA BAZY (GRID)</label>
+                <input type="text" id="baseGrid" placeholder="np. M21">
+            </div>
+
+            <div class="form-group">
+                <label>DODAJ CZŁONKÓW</label>
+                <input type="text" id="playerSearch" placeholder="Wpisz nick i naciśnij Enter">
+                <div id="playersTagsList" class="tags-container" style="margin-top:10px;"></div>
+            </div>
+
+            <button class="btn-rust-main" onclick="addTeam()">UTWÓRZ DRUŻYNĘ</button>
         </div>
     </div>
 
