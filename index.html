@@ -8,6 +8,11 @@
 </head>
 <body>
 
+    <div id="verifyBanner" class="verify-banner" style="display: none;">
+        Twoje konto nie jest zweryfikowane! Sprawdź e-mail i kliknij link aktywacyjny. 
+        <button onclick="resendVerifyEmail()">Wyślij ponownie</button>
+    </div>
+
     <div class="top-bar">
         <div class="server-info">
             <span id="serverName">Serwer info...</span>
@@ -35,7 +40,6 @@
                 <button class="tab-btn active" onclick="switchAuthTab('login')">Logowanie</button>
                 <button class="tab-btn" onclick="switchAuthTab('register')">Rejestracja</button>
             </div>
-            
             <div id="authFields">
                 <div class="form-group" id="nickGroup" style="display: none;">
                     <label>LOGIN (NICK)</label>
@@ -50,7 +54,6 @@
                     <input type="password" id="authPassword">
                 </div>
                 <button class="btn-save" id="authSubmit" onclick="handleAuth()">ZALOGUJ SIĘ</button>
-                
                 <div style="text-align: center; margin-top: 15px; border-top: 1px solid #222; padding-top: 15px;">
                     <button class="btn-google" onclick="loginWithGoogle()">
                         <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="16"> Kontynuuj z Google
