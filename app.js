@@ -7,7 +7,7 @@ const firebaseConfig = {
     appId: "1:127501998256:web:99a73947e20f1eecb2c375"
 };
 
-// INICJALIZACJA
+// INITIALIZE
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const auth = firebase.auth();
@@ -15,25 +15,25 @@ const SERVER_ID = '3344761';
 
 let tempPlayers = [];
 let onlinePlayers = [];
+let editingTeamId = null;
 
-// --- FUNKCJE MODALI ---
+// --- MODALS & UI ---
 function toggleModal(id, show) {
     const modal = document.getElementById(id);
-    if (modal) modal.style.display = show ? 'block' : 'none';
+    if (modal) {
+        modal.style.display = show ? 'block' : 'none';
+        if (!show && id === 'teamModal') resetTeamForm();
+    }
 }
 
 function switchAuthTab(mode) {
     const isLogin = mode === 'login';
-    const nickGroup = document.getElementById('nickGroup');
-    const tabLogin = document.getElementById('tab-login');
-    const tabRegister = document.getElementById('tab-register');
-
-    if (nickGroup) nickGroup.style.display = isLogin ? 'none' : 'block';
-    if (tabLogin) tabLogin.classList.toggle('active', isLogin);
-    if (tabRegister) tabRegister.classList.toggle('active', !isLogin);
+    document.getElementById('nickGroup').style.display = isLogin ? 'none' : 'block';
+    document.getElementById('tab-login').classList.toggle('active', isLogin);
+    document.getElementById('tab-register').classList.toggle('active', !isLogin);
 }
 
-// --- LOGIKA AUTORYZACJI (NAPRAWIONE PRZYCISKI) ---
+// --- AUTHENTICATION ---
 async function handleAuth() {
     const email = document.getElementById('authEmail').value;
     const pass = document.getElementById('authPassword').value;
@@ -44,89 +44,54 @@ async function handleAuth() {
         if (isLogin) {
             await auth.signInWithEmailAndPassword(email, pass);
         } else {
-            if (!nick) return alert("Podaj swój nick!");
+            if (!nick) return alert("Podaj nick!");
             const res = await auth.createUserWithEmailAndPassword(email, pass);
             await res.user.updateProfile({ displayName: nick });
             await res.user.sendEmailVerification();
-            alert("Konto utworzone! Zweryfikuj e-mail.");
+            alert("Zweryfikuj e-mail!");
         }
         toggleModal('authModal', false);
-    } catch (e) {
-        alert("Błąd: " + e.message);
-    }
+    } catch (e) { alert(e.message); }
 }
 
 async function loginWithGoogle() {
-    const provider = new firebase.auth.GoogleAuthProvider();
     try {
-        await auth.signInWithPopup(provider);
+        await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
         toggleModal('authModal', false);
-    } catch (e) {
-        alert("Błąd Google: " + e.message);
-    }
+    } catch (e) { alert(e.message); }
 }
 
-function logoutUser() {
-    auth.signOut().then(() => {
-        location.reload();
-    });
-}
+function logoutUser() { auth.signOut().then(() => location.reload()); }
 
-// MONITOROWANIE STANU UŻYTKOWNIKA
-auth.onAuthStateChanged(user => {
-    const btnCreate = document.getElementById('btnCreateTeam');
-    const authButtons = document.getElementById('authButtons');
-    const userInfo = document.getElementById('userInfo');
-    const userNameDisplay = document.getElementById('userDisplayName');
-
-    if (user) {
-        if (authButtons) authButtons.style.display = 'none';
-        if (userInfo) userInfo.style.display = 'flex';
-        if (userNameDisplay) userNameDisplay.innerText = user.displayName || user.email;
-        if (btnCreate) btnCreate.style.setProperty('display', 'inline-block', 'important');
-    } else {
-        if (authButtons) authButtons.style.display = 'block';
-        if (userInfo) userInfo.style.display = 'none';
-        if (btnCreate) btnCreate.style.display = 'none';
-    }
-});
-
-// --- STATUS SERWERA I GRACZY ---
+// --- SERVER STATUS & ONLINE PLAYERS ---
 async function updateServerStatus() {
     try {
         const res = await fetch(`https://api.battlemetrics.com/servers/${SERVER_ID}?include=player`);
         const data = await res.json();
-        
-        const serverName = document.getElementById('serverName');
-        const onlineCount = document.getElementById('onlineCount');
-        
-        if (serverName) serverName.innerText = data.data.attributes.name;
-        if (onlineCount) onlineCount.innerText = `${data.data.attributes.players}/${data.data.attributes.maxPlayers}`;
-        
+        document.getElementById('serverName').innerText = data.data.attributes.name;
+        document.getElementById('onlineCount').innerText = `${data.data.attributes.players}/${data.data.attributes.maxPlayers}`;
         if (data.included) {
             onlinePlayers = data.included.map(p => p.attributes.name.toLowerCase());
         }
-    } catch (e) {
-        console.error("BattleMetrics Error:", e);
-    }
+    } catch (e) { console.error(e); }
 }
 
-// --- SYSTEM TEAMÓW ---
+// --- TEAM MANAGEMENT ---
 function loadTeams() {
     db.collection("teams").orderBy("createdAt", "desc").onSnapshot(snap => {
         const grid = document.getElementById('teamsGrid');
         if (!grid) return;
         grid.innerHTML = "";
-        
+        const currentUser = auth.currentUser;
+
         snap.forEach(doc => {
             const t = doc.data();
-            const membersList = t.members.map(m => {
+            const id = doc.id;
+            const isLeader = currentUser && t.leaderId === currentUser.uid;
+            
+            const membersHTML = t.members.map(m => {
                 const isOnline = onlinePlayers.includes(m.toLowerCase());
-                return `
-                    <div class="member-row">
-                        <span>${m}</span>
-                        <span class="status-indicator ${isOnline ? 'status-online' : 'status-offline'}"></span>
-                    </div>`;
+                return `<div class="member-row"><span>${m}</span><span class="status-indicator ${isOnline ? 'status-online' : 'status-offline'}"></span></div>`;
             }).join('');
 
             grid.innerHTML += `
@@ -137,17 +102,18 @@ function loadTeams() {
                             <h3>${t.name}</h3>
                             <span class="team-card-grid">GRID: ${t.grid}</span>
                         </div>
+                        ${isLeader ? `<span class="edit-icon" onclick="prepareEditTeam('${id}')">⚙️</span>` : ''}
                     </div>
                     <div class="team-card-members">
                         <label style="font-size:10px; color:#444;">SKŁAD:</label>
-                        ${membersList}
+                        ${membersHTML}
                     </div>
                 </div>`;
         });
     });
 }
 
-// LOGIKA FORMULARZA TEAMU
+// FORM LOGIC
 function handleAvatarPreview(input) {
     if (input.files && input.files[0]) {
         const reader = new FileReader();
@@ -161,56 +127,96 @@ function handleAvatarPreview(input) {
     }
 }
 
-// Dodawanie członków (Enter)
-const playerInput = document.getElementById('playerInput');
-if (playerInput) {
-    playerInput.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            const nick = this.value.trim();
-            if (nick && !tempPlayers.includes(nick)) {
-                tempPlayers.push(nick);
-                const tagsList = document.getElementById('playersTagsList');
-                if (tagsList) {
-                    tagsList.innerHTML += `<div class="player-tag">${nick}</div>`;
-                }
-            }
-            this.value = '';
+document.getElementById('playerInput')?.addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        const nick = this.value.trim();
+        if (nick && !tempPlayers.includes(nick)) {
+            tempPlayers.push(nick);
+            renderTags();
         }
-    });
+        this.value = '';
+    }
+});
+
+function renderTags() {
+    document.getElementById('playersTagsList').innerHTML = tempPlayers.map((p, i) => `
+        <div class="player-tag">${p} <span class="remove-tag" onclick="removePlayer(${i})">×</span></div>
+    `).join('');
+}
+
+function removePlayer(i) {
+    tempPlayers.splice(i, 1);
+    renderTags();
+}
+
+async function prepareEditTeam(id) {
+    editingTeamId = id;
+    const doc = await db.collection("teams").doc(id).get();
+    const data = doc.data();
+    
+    document.getElementById('teamName').value = data.name;
+    document.getElementById('baseGrid').value = data.grid;
+    tempPlayers = [...data.members];
+    renderTags();
+    
+    if (data.avatar) {
+        const img = document.getElementById('avatarPreview');
+        img.src = data.avatar;
+        img.style.display = 'block';
+        document.getElementById('avatarPlaceholder').style.display = 'none';
+    }
+    
+    document.querySelector('#teamModal .rust-title').innerText = "⚙️ EDYTUJ DRUŻYNĘ";
+    toggleModal('teamModal', true);
 }
 
 async function saveTeam() {
     const user = auth.currentUser;
-    if (!user) return alert("Zaloguj się!");
-
     const name = document.getElementById('teamName').value;
     const grid = document.getElementById('baseGrid').value;
     const avatar = document.getElementById('avatarPreview').src;
 
-    if (!name || !grid) return alert("Uzupełnij nazwę i grid!");
+    if (!user || !name || !grid) return alert("Uzupełnij dane!");
+
+    const data = {
+        name, grid, avatar, members: tempPlayers,
+        leaderId: user.uid, leaderNick: user.displayName || user.email,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
 
     try {
-        await db.collection("teams").add({
-            name: name,
-            grid: grid,
-            avatar: avatar,
-            members: tempPlayers,
-            leaderId: user.uid,
-            leaderNick: user.displayName || user.email,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        
-        tempPlayers = [];
+        if (editingTeamId) {
+            await db.collection("teams").doc(editingTeamId).update(data);
+        } else {
+            data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+            await db.collection("teams").add(data);
+        }
         toggleModal('teamModal', false);
-        alert("Drużyna zapisana!");
-    } catch (e) {
-        alert("Błąd zapisu: " + e.message);
-    }
+    } catch (e) { alert(e.message); }
 }
 
-// START
-updateServerStatus().then(() => {
+function resetTeamForm() {
+    editingTeamId = null;
+    tempPlayers = [];
+    document.getElementById('teamName').value = "";
+    document.getElementById('baseGrid').value = "";
+    document.getElementById('avatarPreview').src = "";
+    document.getElementById('avatarPreview').style.display = 'none';
+    document.getElementById('avatarPlaceholder').style.display = 'block';
+    document.getElementById('playersTagsList').innerHTML = "";
+    document.querySelector('#teamModal .rust-title').innerText = "🛡️ UTWÓRZ DRUŻYNĘ";
+}
+
+// MONITOR STATE
+auth.onAuthStateChanged(user => {
+    document.getElementById('btnCreateTeam').style.display = user ? 'inline-block' : 'none';
+    document.getElementById('authButtons').style.display = user ? 'none' : 'block';
+    document.getElementById('userInfo').style.display = user ? 'flex' : 'none';
+    if(user) document.getElementById('userDisplayName').innerText = user.displayName || user.email;
     loadTeams();
 });
+
+// START
+updateServerStatus();
 setInterval(updateServerStatus, 30000);
