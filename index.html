@@ -9,8 +9,8 @@
 <body>
 
     <div id="verifyBanner" class="verify-banner" style="display: none;">
-        Twoje konto nie jest zweryfikowane! Sprawdź e-mail i kliknij link aktywacyjny. 
-        <button onclick="resendVerifyEmail()">Wyślij ponownie</button>
+        <span>📧 Twoje konto nie jest zweryfikowane! Sprawdź e-mail (też SPAM).</span>
+        <button onclick="resendVerifyEmail()">Wyślij kod ponownie</button>
     </div>
 
     <div class="top-bar">
@@ -66,7 +66,6 @@
     <div id="onboardingModal" class="modal">
         <div class="modal-content">
             <h2>Wybierz swój Login</h2>
-            <p style="font-size: 11px; color: #666; margin-bottom: 15px;">To będzie Twój identyfikator na stronie.</p>
             <div class="form-group">
                 <input type="text" id="onboardingNick" placeholder="np. MasterRust">
             </div>
