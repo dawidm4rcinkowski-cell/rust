@@ -22,7 +22,21 @@ body { background-color: #0a0a0a; color: #e0e0e0; font-family: 'Segoe UI', sans-
     border-radius: 8px;
 }
 
-.overlay-buttons { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+.overlay-buttons { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; }
+
+/* Styl dla przycisku sprawdzania */
+.btn-check {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 15px;
+    font-weight: bold;
+    font-size: 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+.btn-check:hover { background-color: #45a049; }
 
 .loader-small {
     border: 2px solid #222;
