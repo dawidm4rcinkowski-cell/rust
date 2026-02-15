@@ -1,99 +1,116 @@
-/* GŁÓWNE */
-* { box-sizing: border-box; }
+/* --- RESET I PODSTAWY --- */
+* { 
+    box-sizing: border-box; 
+    -webkit-user-select: none; /* Blokuje zaznaczanie tekstu na elementach UI */
+    user-select: none;
+}
+
 body { 
-    background: #0a0a0a; 
+    background-color: #0a0a0a !important; 
     color: #fff; 
-    font-family: 'Oswald', 'Segoe UI', sans-serif; 
+    font-family: 'Segoe UI', sans-serif; 
     margin: 0; 
     padding-top: 80px; 
 }
 
-/* TOP BAR I STATUS */
-.top-bar { 
-    position: fixed; top: 0; width: 100%; height: 65px; 
-    background: #111; display: flex; align-items: center; 
-    justify-content: space-between; padding: 0 25px; 
-    border-bottom: 2px solid #222; z-index: 1000; 
+/* --- NAPRAWA PRZYCISKU X --- */
+.close-btn { 
+    position: absolute; 
+    right: 20px; 
+    top: 15px; 
+    cursor: pointer !important; 
+    font-size: 28px; 
+    color: #444; 
+    line-height: 1;
+    transition: color 0.2s;
+}
+.close-btn:hover { color: #cd412b; }
+
+/* --- MODALE --- */
+div.modal { 
+    display: none; 
+    position: fixed; 
+    top: 0; left: 0; 
+    width: 100%; height: 100%; 
+    background: rgba(0,0,0,0.9); 
+    z-index: 9999; 
 }
 
-.server-info { display: flex; align-items: center; gap: 12px; }
-
-.status-indicator { 
-    width: 10px; height: 10px; background: #4CAF50; 
-    border-radius: 50%; box-shadow: 0 0 8px #4CAF50; 
+div.modal-content { 
+    background: #1a1a1a !important; 
+    margin: 10% auto; 
+    padding: 30px; 
+    width: 90%; 
+    max-width: 400px; 
+    border-top: 4px solid #cd412b; 
+    position: relative; 
+    border-radius: 4px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
 }
 
-#serverName { font-weight: bold; color: #aaa; text-transform: uppercase; letter-spacing: 1px; }
-
-.count-badge { 
-    background: #1a1a1a; padding: 4px 10px; 
-    border-radius: 4px; color: #4CAF50; 
-    border: 1px solid #333; font-size: 13px; 
+/* --- WYMUSZENIE WYGLĄDU PRZYCISKÓW (Koniec z białymi) --- */
+button.btn-rust-main, 
+button.btn-rust-small,
+button.btn-save,
+button#authSubmit {
+    background-color: #cd412b !important;
+    color: white !important;
+    border: none !important;
+    padding: 12px 20px !important;
+    font-weight: bold !important;
+    text-transform: uppercase !important;
+    cursor: pointer !important;
+    display: inline-block !important;
+    appearance: none !important; /* Wyłącza systemowy wygląd */
+    -webkit-appearance: none;
 }
 
-/* MODALE (UKRYTE DOMYŚLNIE) */
-.modal { 
-    display: none; position: fixed; top: 0; left: 0; 
-    width: 100%; height: 100%; background: rgba(0,0,0,0.95); 
-    z-index: 2000; 
+button.btn-rust-main:hover, button.btn-save:hover {
+    background-color: #ff4d31 !important;
 }
 
-.modal-content { 
-    background: #151515; width: 90%; max-width: 420px; 
-    margin: 5% auto; padding: 30px; border-radius: 4px; 
-    border-top: 4px solid #cd412b; position: relative; 
+/* Przycisk Google */
+button.btn-google {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    border: none !important;
+    padding: 12px !important;
+    margin-top: 15px !important;
+    width: 100% !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    border-radius: 4px !important;
 }
 
-/* PRZYCISKI RUST STYLE */
-.btn-rust-main { 
-    width: 100%; padding: 14px; background: #cd412b; 
-    color: white; border: none; font-weight: bold; 
-    cursor: pointer; text-transform: uppercase; 
+/* Przyciski Tabów (Logowanie/Rejestracja) */
+button.tab-btn {
+    background: none !important;
+    border: none !important;
+    color: #666 !important;
+    padding: 10px !important;
+    cursor: pointer !important;
+    font-weight: bold !important;
+    border-bottom: 2px solid transparent !important;
 }
 
-.btn-rust-small { 
-    background: #cd412b; color: white; border: none; 
-    padding: 8px 15px; border-radius: 2px; cursor: pointer; 
-    font-size: 12px; font-weight: bold; 
+button.tab-btn.active {
+    color: #cd412b !important;
+    border-bottom: 2px solid #cd412b !important;
 }
 
-.btn-google {
-    width: 100%; padding: 12px; background: white; color: #000;
-    border: none; border-radius: 4px; cursor: pointer;
-    display: flex; align-items: center; justify-content: center; gap: 10px;
-    font-weight: bold; margin-top: 10px;
+/* --- INPUTY --- */
+input[type="text"], 
+input[type="email"], 
+input[type="password"] {
+    width: 100% !important;
+    padding: 12px !important;
+    background: #0d0d0d !important;
+    border: 1px solid #222 !important;
+    color: white !important;
+    margin-top: 5px;
+    outline: none;
 }
 
-/* INPUTY */
-.form-group { margin-bottom: 15px; }
-.form-group label { display: block; font-size: 11px; color: #555; margin-bottom: 5px; font-weight: bold; }
-.form-group input { 
-    width: 100%; padding: 12px; background: #0d0d0d; 
-    border: 1px solid #222; color: white; border-radius: 4px;
-}
-
-/* AVATAR I TAGI */
-.team-top-row { display: flex; gap: 15px; align-items: center; margin-bottom: 20px; }
-.avatar-box { 
-    width: 65px; height: 65px; background: #000; 
-    border: 2px dashed #333; border-radius: 4px; 
-    display: flex; justify-content: center; align-items: center; cursor: pointer; 
-}
-.avatar-box img { width: 100%; height: 100%; object-fit: cover; }
-
-.player-input-row { display: flex; gap: 5px; }
-.add-player-btn { background: #333; border: none; color: white; padding: 0 15px; cursor: pointer; }
-.tags-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
-.player-tag { background: #222; padding: 5px 10px; font-size: 12px; border-radius: 3px; border: 1px solid #333; }
-
-/* BLOKADA */
-.full-overlay { 
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-    background: #0a0a0a; z-index: 5000; display: flex; 
-    justify-content: center; align-items: center; 
-}
-
-.rust-header { font-size: 24px; font-weight: 900; margin-bottom: 20px; color: #cd412b; text-align: center; }
-.divider { text-align: center; margin: 15px 0; color: #333; font-size: 12px; position: relative; }
-.divider::before { content: ""; position: absolute; left: 0; top: 50%; width: 40%; height: 1px; background: #222; }
-.divider::after { content: ""; position: absolute; right: 0; top: 50%; width: 40%; height: 1px; background: #222; }
+input:focus { border-color: #cd412b !important; }
