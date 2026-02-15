@@ -1,149 +1,116 @@
-const SERVER_ID = '3344761';
-let playersOnlineNames = [];
-
-// Obsługa okien modalnych
-function toggleModal(modalId, show) {
-    document.getElementById(modalId).style.display = show ? 'block' : 'none';
-}
-
-// Pobieranie danych z serwera Rust
-async function fetchServerData() {
-    try {
-        const response = await fetch(`https://api.battlemetrics.com/servers/${SERVER_ID}?include=player`);
-        const result = await response.json();
-        
-        // Aktualizacja UI nagłówka
-        document.getElementById('serverName').innerText = result.data.attributes.name;
-        document.getElementById('onlineCount').innerText = `${result.data.attributes.players} / ${result.data.attributes.maxPlayers}`;
-        
-        // Lista graczy online do sprawdzania kropki statusu
-        playersOnlineNames = (result.included || []).map(p => p.attributes.name.toLowerCase());
-        
-        renderTeams();
-    } catch (e) {
-        console.error("Błąd API BattleMetrics");
-    }
-}
-
-// Tworzenie nowego teamu
-function addTeam() {
-    const name = document.getElementById('teamName').value;
-    const grid = document.getElementById('baseGrid').value.toUpperCase();
-    const pass = document.getElementById('leaderPass').value;
-    const playersRaw = document.getElementById('teamPlayers').value;
-
-    if (!name || !grid || !pass) return alert("Wypełnij wymagane pola (Nazwa, Kratka, Hasło)!");
-
-    const playersArray = playersRaw.split(',').map(p => p.trim()).filter(p => p !== "");
-
-    const teams = JSON.parse(localStorage.getItem('rust_manager_v7') || "[]");
-    teams.push({
-        name: name,
-        grid: grid,
-        pass: pass, // Hasło lidera
-        players: playersArray
-    });
-
-    localStorage.setItem('rust_manager_v7', JSON.stringify(teams));
-
-    // Czyszczenie i zamykanie
-    toggleModal('teamModal', false);
-    document.getElementById('teamName').value = "";
-    document.getElementById('baseGrid').value = "";
-    document.getElementById('leaderPass').value = "";
-    document.getElementById('teamPlayers').value = "";
-    
-    renderTeams();
-}
-
-// Wyświetlanie kwadratowych kontenerów
-function renderTeams() {
-    const gridContainer = document.getElementById('teamsGrid');
-    gridContainer.innerHTML = "";
-    const teams = JSON.parse(localStorage.getItem('rust_manager_v7') || "[]");
-
-    teams.forEach((team, index) => {
-        const box = document.createElement('div');
-        box.className = 'team-box';
-        
-        // Generowanie listy graczy ze statusem
-        let playersListHTML = team.players.map(p => {
-            const isOnline = playersOnlineNames.includes(p.toLowerCase());
-            return `
-                <div class="player-row">
-                    <span>${p}</span>
-                    <span class="status-dot" style="background-color: ${isOnline ? '#4CAF50' : '#ff4444'}"></span>
-                </div>
-            `;
-        }).join('');
-
-        box.innerHTML = `
-            <button class="btn-edit-trigger" onclick="openEditModal(${index})">EDYCJA</button>
-            <div class="grid-bg-text">${team.grid}</div>
-            <h3>${team.name}</h3>
-            <div class="players-content">
-                ${playersListHTML || '<span style="color:#333">Brak dodanych graczy</span>'}
-            </div>
-        `;
-        gridContainer.appendChild(box);
-    });
-}
-
-// Otwieranie edycji
-function openEditModal(index) {
-    const teams = JSON.parse(localStorage.getItem('rust_manager_v7'));
-    document.getElementById('editIndex').value = index;
-    document.getElementById('editPlayers').value = teams[index].players.join(', ');
-    document.getElementById('confirmPass').value = "";
-    toggleModal('editModal', true);
-}
-
-// Zapisywanie edycji po weryfikacji hasła
-function saveEdit() {
-    const index = document.getElementById('editIndex').value;
-    const enteredPass = document.getElementById('confirmPass').value;
-    const playersNew = document.getElementById('editPlayers').value.split(',').map(p => p.trim()).filter(p => p);
-
-    let teams = JSON.parse(localStorage.getItem('rust_manager_v7'));
-
-    if (teams[index].pass !== enteredPass) {
-        alert("BŁĘDNE HASŁO LIDERA! Nie możesz edytować tego teamu.");
-        return;
-    }
-
-    teams[index].players = playersNew;
-    localStorage.setItem('rust_manager_v7', JSON.stringify(teams));
-    
-    toggleModal('editModal', false);
-    renderTeams();
-}
-
-// Usuwanie pojedynczego teamu
-function deleteSingleTeam() {
-    const index = document.getElementById('editIndex').value;
-    const enteredPass = document.getElementById('confirmPass').value;
-    let teams = JSON.parse(localStorage.getItem('rust_manager_v7'));
-
-    if (teams[index].pass !== enteredPass) {
-        alert("BŁĘDNE HASŁO! Nie masz uprawnień do usunięcia tego teamu.");
-        return;
-    }
-
-    if (confirm("Czy na pewno chcesz usunąć ten team?")) {
-        teams.splice(index, 1);
-        localStorage.setItem('rust_manager_v7', JSON.stringify(teams));
-        toggleModal('editModal', false);
-        renderTeams();
-    }
-}
-
-function clearAllTeams() {
-    if(confirm("To usunie WSZYSTKIE drużyny z Twojej przeglądarki. Kontynuować?")) {
-        localStorage.removeItem('rust_manager_v7');
-        renderTeams();
-    }
-}
+// TWOJE KLUCZE Z FIREBASE
+const firebaseConfig = {
+  apiKey: "AIzaSyB74-e1hA8JW31YhdR_ZwgF-wfKdb3aqL4",
+  authDomain: "ruscik-159d4.firebaseapp.com",
+  projectId: "ruscik-159d4",
+  storageBucket: "ruscik-159d4.firebasestorage.app",
+  messagingSenderId: "127501998256",
+  appId: "1:127501998256:web:99a73947e20f1eecb2c375",
+  measurementId: "G-71JX7Q9K9X"
+};
 
 // Inicjalizacja
-fetchServerData();
-setInterval(fetchServerData, 30000); // Odświeżaj statusy co 30 sekund
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const auth = firebase.auth();
+
+const SERVER_ID = '3344761';
+const DEFAULT_LOGO = 'https://i.imgur.com/vUUnjT0.png';
+let playersOnlineNames = [];
+let authMode = 'login';
+
+// --- SYSTEM AUTORYZACJI ---
+function switchAuthTab(mode) {
+    authMode = mode;
+    document.getElementById('authSubmit').innerText = mode === 'login' ? 'ZALOGUJ SIĘ' : 'ZAŁÓŻ KONTO';
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
+}
+
+async function handleAuth() {
+    const email = document.getElementById('authEmail').value;
+    const pass = document.getElementById('authPassword').value;
+    try {
+        if (authMode === 'login') {
+            await auth.signInWithEmailAndPassword(email, pass);
+        } else {
+            await auth.createUserWithEmailAndPassword(email, pass);
+        }
+        toggleModal('authModal', false);
+    } catch (e) { alert(e.message); }
+}
+
+function logoutUser() { auth.signOut(); }
+
+auth.onAuthStateChanged(user => {
+    document.getElementById('authButtons').style.display = user ? 'none' : 'block';
+    document.getElementById('userInfo').style.display = user ? 'block' : 'none';
+    if(user) document.getElementById('userMail').innerText = user.email;
+});
+
+// --- POBIERANIE STATUSU SERWERA ---
+async function fetchServerStatus() {
+    try {
+        const res = await fetch(`https://api.battlemetrics.com/servers/${SERVER_ID}?include=player`);
+        const data = await res.json();
+        document.getElementById('serverName').innerText = data.data.attributes.name;
+        document.getElementById('onlineCount').innerText = `${data.data.attributes.players}/${data.data.attributes.maxPlayers}`;
+        playersOnlineNames = (data.included || []).map(p => p.attributes.name.toLowerCase());
+        listenToTeams(); // Start słuchania bazy danych
+    } catch (e) { console.log("API Error"); }
+}
+
+// --- OBSŁUGA BAZY DANYCH (Firestore) ---
+function addTeam() {
+    if (!auth.currentUser) return alert("Musisz być zalogowany!");
+    
+    const teamData = {
+        name: document.getElementById('teamName').value,
+        logo: document.getElementById('teamLogo').value || DEFAULT_LOGO,
+        grid: document.getElementById('baseGrid').value.toUpperCase(),
+        pass: document.getElementById('leaderPass').value,
+        players: document.getElementById('teamPlayers').value.split(',').map(p => p.trim()).filter(p => p),
+        owner: auth.currentUser.uid,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+
+    if (!teamData.name || !teamData.grid) return alert("Wypełnij nazwę i kratkę!");
+
+    db.collection("teams").add(teamData)
+        .then(() => {
+            toggleModal('teamModal', false);
+            alert("Dodano do chmury!");
+        });
+}
+
+// Słuchanie zmian w czasie rzeczywistym
+function listenToTeams() {
+    db.collection("teams").orderBy("createdAt", "desc").onSnapshot(snapshot => {
+        const container = document.getElementById('teamsGrid');
+        container.innerHTML = "";
+        
+        snapshot.forEach(doc => {
+            const team = doc.data();
+            const box = document.createElement('div');
+            box.className = 'team-box';
+            
+            let pHTML = team.players.map(p => {
+                const isOnline = playersOnlineNames.includes(p.toLowerCase());
+                return `<div class="player-row"><span>${p}</span><span class="status-dot" style="background:${isOnline ? '#4CAF50' : '#ff4444'}"></span></div>`;
+            }).join('');
+
+            box.innerHTML = `
+                <img src="${team.logo}" class="team-logo-img" onerror="this.src='${DEFAULT_LOGO}'">
+                <h3 style="color:#cd412b; margin:0;">${team.name}</h3>
+                <div style="width:100%; margin-top:15px;">${pHTML}</div>
+                <div style="position:absolute; bottom:5px; right:10px; font-size:50px; font-weight:900; color:#fff; opacity:0.03;">${team.grid}</div>
+            `;
+            container.appendChild(box);
+        });
+    });
+}
+
+function toggleModal(id, show) { document.getElementById(id).style.display = show ? 'block' : 'none'; }
+
+fetchServerStatus();
+setInterval(fetchServerStatus, 30000);
