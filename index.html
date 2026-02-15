@@ -16,7 +16,7 @@
                 <span id="serverName">ŁĄCZENIE...</span>
                 <div class="server-row-bottom">
                     <span id="onlineCount" class="badge">0/0</span>
-                    <button id="btnCreateTeam" class="btn-nav-rust" onclick="toggleModal('teamModal', true)" style="display: none;">+ STWÓRZ TEAM</button>
+                    <button id="btnCreateTeam" class="btn-nav-rust" style="display: none;">+ STWÓRZ TEAM</button>
                 </div>
             </div>
         </div>
@@ -41,12 +41,10 @@
     <div id="authModal" class="modal">
         <div class="modal-content">
             <span class="close-btn" onclick="toggleModal('authModal', false)">&times;</span>
-            
             <div class="auth-tabs">
                 <button id="tab-login" class="tab-btn active" onclick="switchAuthTab('login')">LOGOWANIE</button>
                 <button id="tab-register" class="tab-btn" onclick="switchAuthTab('register')">REJESTRACJA</button>
             </div>
-            
             <div id="nickGroup" class="form-group" style="display: none;">
                 <label>TWÓJ NICK</label>
                 <input type="text" id="authNick" placeholder="Nick z gry">
@@ -59,13 +57,8 @@
                 <label>HASŁO</label>
                 <input type="password" id="authPassword">
             </div>
-            
             <button class="btn-rust-main" onclick="handleAuth()">POTWIERDŹ</button>
-            
-            <div class="separator">
-                <span class="separator-text">LUB</span>
-            </div>
-            
+            <div class="separator"><span class="separator-text">LUB</span></div>
             <button class="btn-google" onclick="loginWithGoogle()">
                 <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18"> KONTYNUUJ PRZEZ GOOGLE
             </button>
@@ -76,6 +69,10 @@
         <div class="modal-content">
             <span class="close-btn" onclick="toggleModal('teamModal', false)">&times;</span>
             <h2 class="rust-title">🛡️ NOWA DRUŻYNA</h2>
+            <div class="form-group">
+                <label>NAZWA TEAMU</label>
+                <input type="text" id="teamName">
+            </div>
             <button class="btn-rust-main">UTWÓRZ</button>
         </div>
     </div>
