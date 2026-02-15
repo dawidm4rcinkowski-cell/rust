@@ -22,6 +22,7 @@
                 </div>
             </div>
         </div>
+        
         <div class="top-bar-right">
             <div id="authButtons">
                 <button class="btn-text-only" onclick="toggleModal('authModal', true); switchAuthTab('login')">ZALOGUJ SIĘ</button>
@@ -77,7 +78,7 @@
                     <label>LOGO</label>
                     <div class="avatar-picker" onclick="document.getElementById('avatarInput').click()">
                         <input type="file" id="avatarInput" hidden accept="image/png, image/jpeg" onchange="handleAvatarPreview(this)">
-                        <img id="avatarPreview" src="">
+                        <img id="avatarPreview" src="" style="display:none;">
                         <span id="avatarPlaceholder">📸</span>
                     </div>
                 </div>
@@ -88,7 +89,7 @@
                     </div>
                     <div class="form-group">
                         <label>GRID BAZY</label>
-                        <input type="text" id="baseGrid">
+                        <input type="text" id="baseGrid" placeholder="np. M12">
                     </div>
                 </div>
             </div>
