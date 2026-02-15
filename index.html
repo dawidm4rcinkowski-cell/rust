@@ -11,60 +11,52 @@
     <div id="verificationOverlay" class="full-overlay" style="display: none;">
         <div class="overlay-content">
             <h1>📧 Weryfikacja e-mail</h1>
-            <p>Kliknij link w wiadomości e-mail, aby odblokować stronę.</p>
+            <p>Kliknij link aktywacyjny w swojej poczcie.</p>
             <div class="overlay-buttons">
                 <button class="btn-check" onclick="manualCheckStatus()">SPRAWDŹ STATUS</button>
                 <button class="btn-save" onclick="resendVerifyEmail()">Wyślij link ponownie</button>
                 <button class="btn-outline" onclick="logoutUser()">Wyloguj się</button>
             </div>
-            <div class="loader-small"></div>
         </div>
     </div>
 
     <div class="top-bar">
         <div class="server-info">
-            <span id="serverName">Ładowanie serwera...</span>
+            <span id="serverName">Serwer...</span>
             <span id="onlineCount" class="count-badge">0/0</span>
-            <button id="btnCreateTeam" class="btn-open" onclick="toggleModal('teamModal', true)" style="display: none; margin-left: 15px;">+ STWÓRZ TEAM</button>
+            <button id="btnCreateTeam" class="btn-open" onclick="toggleModal('teamModal', true)" style="display: none;">+ STWÓRZ TEAM</button>
         </div>
-        
-        <div class="user-actions">
-            <div id="authButtons">
-                <button class="btn-outline" onclick="toggleModal('authModal', true)">ZALOGUJ / REJESTRACJA</button>
-            </div>
-            <div id="userInfo" style="display: none; align-items: center; gap: 15px;">
-                <span id="userDisplayName" class="user-nick-display"></span>
-                <button class="btn-logout" onclick="logoutUser()">Wyloguj</button>
-            </div>
+        <div id="userInfo" style="display: none;">
+            <span id="userDisplayName"></span>
+            <button class="btn-logout" onclick="logoutUser()">Wyloguj</button>
+        </div>
+        <div id="authButtons">
+            <button class="btn-open" onclick="toggleModal('authModal', true)">ZALOGUJ SIĘ</button>
         </div>
     </div>
 
-    <div id="mainContent">
-        <div id="teamsGrid" class="teams-container"></div>
-    </div>
+    <div id="mainContent" class="teams-container"></div>
 
     <div id="authModal" class="modal">
         <div class="modal-content">
             <span class="close-btn" onclick="toggleModal('authModal', false)">&times;</span>
-            <div id="authTabs">
-                <button class="tab-btn active" onclick="switchAuthTab('login')">Logowanie</button>
-                <button class="tab-btn" onclick="switchAuthTab('register')">Rejestracja</button>
+            <div class="auth-tabs">
+                <button id="tab-login" class="tab-btn active" onclick="switchAuthTab('login')">Logowanie</button>
+                <button id="tab-register" class="tab-btn" onclick="switchAuthTab('register')">Rejestracja</button>
             </div>
-            <div id="authFields">
-                <div class="form-group" id="nickGroup" style="display: none;">
-                    <label>NICK (LOGIN)</label>
-                    <input type="text" id="authNick">
-                </div>
-                <div class="form-group">
-                    <label id="loginLabel">E-MAIL</label>
-                    <input type="text" id="authEmail">
-                </div>
-                <div class="form-group">
-                    <label>HASŁO</label>
-                    <input type="password" id="authPassword">
-                </div>
-                <button class="btn-save" id="authSubmit" onclick="handleAuth()">ZALOGUJ SIĘ</button>
+            <div class="form-group" id="nickGroup" style="display: none;">
+                <label>NICK</label>
+                <input type="text" id="authNick">
             </div>
+            <div class="form-group">
+                <label>E-MAIL</label>
+                <input type="text" id="authEmail">
+            </div>
+            <div class="form-group">
+                <label>HASŁO</label>
+                <input type="password" id="authPassword">
+            </div>
+            <button class="btn-save" onclick="handleAuth()">POTWIERDŹ</button>
         </div>
     </div>
 
@@ -72,35 +64,29 @@
         <div class="modal-content">
             <span class="close-btn" onclick="toggleModal('teamModal', false)">&times;</span>
             <h2>🛡️ NOWY TEAM</h2>
-            
             <div class="team-header-input">
                 <div class="avatar-upload" onclick="document.getElementById('teamAvatarInput').click()">
                     <input type="file" id="teamAvatarInput" hidden accept="image/*" onchange="previewAvatar(this)">
-                    <div id="avatarPreview" class="avatar-placeholder">
-                        <svg viewBox="0 0 24 24" width="30" fill="#444"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
-                    </div>
+                    <div id="avatarPreview">📸</div>
                 </div>
-                <div class="form-group" style="flex: 1;">
+                <div class="form-group" style="flex:1">
                     <label>NAZWA TEAMU</label>
-                    <input type="text" id="teamName" placeholder="Nazwa ekipy">
+                    <input type="text" id="teamName">
                 </div>
             </div>
-
             <div class="form-group">
-                <label>KRATKA BAZY (GRID)</label>
-                <input type="text" id="baseGrid" placeholder="np. A15">
+                <label>KRATKA (GRID)</label>
+                <input type="text" id="baseGrid">
             </div>
-
             <div class="form-group">
-                <label>DODAJ GRACZY (Enter = Dodaj)</label>
+                <label>GRACZE (Enter)</label>
                 <div class="player-input-wrapper">
-                    <input type="text" id="playerSearch" placeholder="Nick gracza">
-                    <button type="button" class="btn-add-player" onclick="addPlayerTag()">+</button>
+                    <input type="text" id="playerSearch">
+                    <button onclick="addPlayerTag()">+</button>
                 </div>
                 <div id="playersTagsList" class="tags-container"></div>
             </div>
-
-            <button class="btn-save" onclick="addTeam()">UTWÓRZ DRUŻYNĘ</button>
+            <button class="btn-save" onclick="addTeam()">UTWÓRZ</button>
         </div>
     </div>
 
