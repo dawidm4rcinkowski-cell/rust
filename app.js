@@ -15,7 +15,7 @@ const SERVER_ID = '3344761';
 let playersOnlineNames = [];
 let authMode = 'login';
 
-// --- SYSTEM AUTORYZACJI ---
+// --- AUTORYZACJA ---
 
 function switchAuthTab(mode) {
     authMode = mode;
@@ -41,16 +41,16 @@ async function handleAuth() {
             }
             await auth.signInWithEmailAndPassword(finalEmail, pass);
         } else {
-            if (!nick) throw new Error("Login jest wymagany!");
+            if (!nick) throw new Error("Nick jest wymagany!");
             const nickLower = nick.toLowerCase();
-            const checkNick = await db.collection("users").doc(nickLower).get();
-            if (checkNick.exists) throw new Error("Ten login jest już zajęty!");
+            const check = await db.collection("users").doc(nickLower).get();
+            if (check.exists) throw new Error("Login zajęty!");
 
             const res = await auth.createUserWithEmailAndPassword(emailOrLogin, pass);
-            // WYSYŁKA WERYFIKACJI
+            // WYSYŁKA MAILA WERYFIKACYJNEGO
             await res.user.sendEmailVerification();
-            alert("Wysłano e-mail weryfikacyjny! Sprawdź skrzynkę.");
-            
+            alert("Konto założone! Wysłaliśmy link weryfikacyjny na e-mail.");
+
             await db.collection("users").doc(nickLower).set({ email: emailOrLogin, uid: res.user.uid });
             await res.user.updateProfile({ displayName: nick });
         }
@@ -68,77 +68,68 @@ async function loginWithGoogle() {
 
 async function checkUserNick(user) {
     if (!user) return;
-    try {
-        const userQuery = await db.collection("users").where("uid", "==", user.uid).get();
-        if (userQuery.empty) {
-            toggleModal('authModal', false);
-            toggleModal('onboardingModal', true);
-        } else {
-            toggleModal('authModal', false); 
-            const foundNick = userQuery.docs[0].id;
-            document.getElementById('userDisplayName').innerText = foundNick;
-            if (user.displayName !== foundNick) await user.updateProfile({ displayName: foundNick });
-        }
-    } catch (error) { console.error("Błąd sprawdzania nicku:", error); }
+    const userQuery = await db.collection("users").where("uid", "==", user.uid).get();
+    if (userQuery.empty) {
+        toggleModal('authModal', false);
+        toggleModal('onboardingModal', true);
+    } else {
+        toggleModal('authModal', false); 
+        const foundNick = userQuery.docs[0].id;
+        document.getElementById('userDisplayName').innerText = foundNick;
+        if (user.displayName !== foundNick) await user.updateProfile({ displayName: foundNick });
+    }
 }
 
 async function saveOnboardingNick() {
     const nick = document.getElementById('onboardingNick').value;
-    if (!nick || nick.length < 3) return alert("Login musi mieć min. 3 znaki!");
+    if (!nick || nick.length < 3) return alert("Min. 3 znaki!");
     const user = auth.currentUser;
     try {
         const nickLower = nick.toLowerCase();
         const check = await db.collection("users").doc(nickLower).get();
-        if (check.exists) throw new Error("Ten login jest już zajęty!");
+        if (check.exists) throw new Error("Zajęty!");
         await db.collection("users").doc(nickLower).set({ email: user.email, uid: user.uid });
         await user.updateProfile({ displayName: nick });
-        toggleModal('onboardingModal', false);
         location.reload(); 
     } catch (e) { alert(e.message); }
 }
 
-// LOGIKA SPRAWDZANIA WERYFIKACJI W STANIE ZALOGOWANIA
+// KLUCZOWE: SPRAWDZANIE STANU WERYFIKACJI
 auth.onAuthStateChanged(user => {
-    const authButtons = document.getElementById('authButtons');
-    const userInfo = document.getElementById('userInfo');
     const btnCreateTeam = document.getElementById('btnCreateTeam');
     const verifyBanner = document.getElementById('verifyBanner');
 
     if (user) {
-        authButtons.style.display = 'none';
-        userInfo.style.display = 'flex';
+        document.getElementById('authButtons').style.display = 'none';
+        document.getElementById('userInfo').style.display = 'flex';
         
-        // Google zawsze uznajemy za zweryfikowane lub sprawdzamy status
+        // Google jest autoweryfikowane
         const isVerified = user.emailVerified || user.providerData[0].providerId === 'google.com';
 
         if (isVerified) {
-            if (btnCreateTeam) btnCreateTeam.style.display = 'inline-block';
-            if (verifyBanner) verifyBanner.style.display = 'none';
+            btnCreateTeam.style.display = 'inline-block';
+            verifyBanner.style.display = 'none';
         } else {
-            if (btnCreateTeam) btnCreateTeam.style.display = 'none';
-            if (verifyBanner) verifyBanner.style.display = 'block';
+            btnCreateTeam.style.display = 'none';
+            verifyBanner.style.display = 'flex';
         }
-
-        toggleModal('authModal', false);
         checkUserNick(user);
     } else {
-        authButtons.style.display = 'block';
-        userInfo.style.display = 'none';
-        if (btnCreateTeam) btnCreateTeam.style.display = 'none';
-        if (verifyBanner) verifyBanner.style.display = 'none';
+        document.getElementById('authButtons').style.display = 'block';
+        document.getElementById('userInfo').style.display = 'none';
+        btnCreateTeam.style.display = 'none';
+        verifyBanner.style.display = 'none';
     }
 });
 
 function resendVerifyEmail() {
-    const user = auth.currentUser;
-    if (user) {
-        user.sendEmailVerification().then(() => alert("E-mail wysłany ponownie!"));
-    }
+    auth.currentUser.sendEmailVerification()
+        .then(() => alert("E-mail został wysłany ponownie!"));
 }
 
 function logoutUser() { auth.signOut().then(() => location.reload()); }
 
-// --- RUST LOGIKA ---
+// --- RUST ---
 
 async function fetchServerStatus() {
     try {
@@ -148,16 +139,13 @@ async function fetchServerStatus() {
         document.getElementById('onlineCount').innerText = `${data.data.attributes.players}/${data.data.attributes.maxPlayers}`;
         playersOnlineNames = (data.included || []).map(p => p.attributes.name.toLowerCase());
         listenToTeams();
-    } catch (e) { console.log("Błąd BattleMetrics"); }
+    } catch (e) { console.error(e); }
 }
 
 function addTeam() {
-    if (!auth.currentUser) return alert("Musisz być zalogowany!");
-    // Dodatkowe zabezpieczenie w kodzie
-    if (!auth.currentUser.emailVerified && auth.currentUser.providerData[0].providerId !== 'google.com') {
-        return alert("Najpierw zweryfikuj adres e-mail!");
+    if (!auth.currentUser || (!auth.currentUser.emailVerified && auth.currentUser.providerData[0].providerId !== 'google.com')) {
+        return alert("Najpierw zweryfikuj e-mail!");
     }
-
     const teamData = {
         name: document.getElementById('teamName').value,
         grid: document.getElementById('baseGrid').value.toUpperCase(),
@@ -165,7 +153,6 @@ function addTeam() {
         owner: auth.currentUser.uid,
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
     };
-    if (!teamData.name || !teamData.grid) return alert("Wypełnij dane!");
     db.collection("teams").add(teamData).then(() => toggleModal('teamModal', false));
 }
 
@@ -178,19 +165,16 @@ function listenToTeams() {
             const box = document.createElement('div');
             box.className = 'team-box';
             let pHTML = team.players.map(p => {
-                const isOnline = playersOnlineNames.includes(p.toLowerCase());
-                return `<div class="player-row"><span>${p}</span><span class="status-dot" style="background:${isOnline ? '#4CAF50' : '#ff4444'}"></span></div>`;
+                const online = playersOnlineNames.includes(p.toLowerCase());
+                return `<div class="player-row"><span>${p}</span><span class="status-dot" style="background:${online ? '#4CAF50' : '#ff4444'}"></span></div>`;
             }).join('');
-            box.innerHTML = `<h3>${team.name}</h3><div style="width:100%; margin-top:10px;">${pHTML}</div><div style="position:absolute; bottom:5px; right:10px; font-size:40px; font-weight:900; color:#fff; opacity:0.05; pointer-events:none;">${team.grid}</div>`;
+            box.innerHTML = `<h3>${team.name}</h3>${pHTML}<div style="position:absolute; bottom:5px; right:10px; font-size:40px; font-weight:900; color:#fff; opacity:0.05; pointer-events:none;">${team.grid}</div>`;
             container.appendChild(box);
         });
     });
 }
 
-function toggleModal(id, show) { 
-    const el = document.getElementById(id);
-    if (el) el.style.display = show ? 'block' : 'none'; 
-}
+function toggleModal(id, show) { document.getElementById(id).style.display = show ? 'block' : 'none'; }
 
 fetchServerStatus();
 setInterval(fetchServerStatus, 30000);
