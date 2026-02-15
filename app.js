@@ -12,83 +12,118 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const auth = firebase.auth();
 const SERVER_ID = '3344761';
+let tempPlayers = [];
+let onlinePlayersNames = []; // Tu będziemy trzymać listę graczy z BM
 
-// MODALS
-function toggleModal(id, show) {
-    const m = document.getElementById(id);
-    if(m) m.style.display = show ? 'block' : 'none';
-}
-
-function switchAuthTab(mode) {
-    const n = document.getElementById('nickGroup');
-    const tl = document.getElementById('tab-login');
-    const tr = document.getElementById('tab-register');
-    if(n) n.style.display = mode === 'login' ? 'none' : 'block';
-    tl.classList.toggle('active', mode === 'login');
-    tr.classList.toggle('active', mode === 'register');
-}
-
-// AUTH ACTIONS
-async function handleAuth() {
-    const e = document.getElementById('authEmail').value;
-    const p = document.getElementById('authPassword').value;
-    const ni = document.getElementById('authNick').value;
+// --- SERWER & STATUS GRACZY ---
+async function fetchServerStatus() {
     try {
-        if (document.getElementById('tab-login').classList.contains('active')) {
-            await auth.signInWithEmailAndPassword(e, p);
-        } else {
-            const res = await auth.createUserWithEmailAndPassword(e, p);
-            await res.user.updateProfile({ displayName: ni });
-            await res.user.sendEmailVerification();
-            alert("Zweryfikuj maila!");
+        const res = await fetch(`https://api.battlemetrics.com/servers/${SERVER_ID}?include=player`);
+        const data = await res.json();
+        
+        // Aktualizacja ogólnych statystyk
+        document.getElementById('serverName').innerText = data.data.attributes.name;
+        document.getElementById('onlineCount').innerText = `${data.data.attributes.players}/${data.data.attributes.maxPlayers}`;
+        
+        // Wyciąganie nicków graczy online
+        if(data.included) {
+            onlinePlayersNames = data.included.map(p => p.attributes.name.toLowerCase());
         }
-        toggleModal('authModal', false);
-    } catch (err) { alert(err.message); }
+    } catch (e) { console.error(e); }
 }
 
-async function loginWithGoogle() {
-    try {
-        await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
-        toggleModal('authModal', false);
-    } catch (err) { alert(err.message); }
+// --- ZARZĄDZANIE DRUŻYNAMI (WYŚWIETLANIE) ---
+function listenToTeams() {
+    db.collection("teams").orderBy("createdAt", "desc").onSnapshot(snap => {
+        const grid = document.getElementById('teamsGrid');
+        grid.innerHTML = "";
+        
+        snap.forEach(doc => {
+            const team = doc.data();
+            const card = document.createElement('div');
+            card.className = 'team-card';
+            
+            // Generowanie listy członków ze statusem
+            const membersHTML = team.members.map(m => {
+                const isOnline = onlinePlayersNames.includes(m.toLowerCase());
+                return `
+                    <div class="member-row">
+                        <span>${m}</span>
+                        <span class="status-indicator ${isOnline ? 'status-online' : 'status-offline'}"></span>
+                    </div>
+                `;
+            }).join('');
+
+            card.innerHTML = `
+                <div class="team-card-header">
+                    <img class="team-card-logo" src="${team.avatar || 'https://via.placeholder.com/50'}">
+                    <div class="team-card-info">
+                        <h3>${team.name}</h3>
+                        <span class="team-card-grid">LOKALIZACJA: ${team.grid}</span>
+                    </div>
+                </div>
+                <div class="team-card-members">
+                    <label style="font-size:10px; color:#444; margin-bottom:5px;">SKŁAD:</label>
+                    ${membersHTML}
+                </div>
+            `;
+            grid.appendChild(card);
+        });
+    });
 }
 
-function logoutUser() { auth.signOut().then(() => location.reload()); }
-
-// MONITOROWANIE STANU
-auth.onAuthStateChanged(user => {
-    const btn = document.getElementById('btnCreateTeam');
-    const ab = document.getElementById('authButtons');
-    const ui = document.getElementById('userInfo');
-    if (user) {
-        if(ab) ab.style.display = 'none';
-        if(ui) ui.style.display = 'flex';
-        document.getElementById('userDisplayName').innerText = user.displayName || user.email;
-        if(btn) btn.style.setProperty('display', 'inline-block', 'important');
-    } else {
-        if(ab) ab.style.display = 'block';
-        if(ui) ui.style.display = 'none';
-        if(btn) btn.style.display = 'none';
-    }
-});
-
-// TEAM ACTION (TEST)
-function addTeam() {
+// --- TWORZENIE TEAMU ---
+async function saveTeam() {
+    const user = auth.currentUser;
     const name = document.getElementById('teamName').value;
-    if(!name) return alert("Podaj nazwę teamu!");
-    alert("Tworzenie teamu: " + name);
-    // Tutaj dodasz zapis do Firebase db.collection('teams').add(...)
+    const grid = document.getElementById('baseGrid').value;
+    const avatar = document.getElementById('avatarPreview').src;
+
+    if(!user || !name) return alert("Błąd danych!");
+
+    await db.collection("teams").add({
+        name: name,
+        grid: grid,
+        avatar: avatar,
+        members: tempPlayers,
+        leaderId: user.uid,
+        leaderNick: user.displayName,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    tempPlayers = [];
+    document.getElementById('playersTagsList').innerHTML = "";
     toggleModal('teamModal', false);
 }
 
-// SERVER DATA
-async function fetchServerStatus() {
-    try {
-        const res = await fetch(`https://api.battlemetrics.com/servers/${SERVER_ID}`);
-        const d = await res.json();
-        document.getElementById('serverName').innerText = d.data.attributes.name;
-        document.getElementById('onlineCount').innerText = `${d.data.attributes.players}/${d.data.attributes.maxPlayers}`;
-    } catch (e) { console.log(e); }
+// Obsługa tagów i Enter
+document.getElementById('playerInput')?.addEventListener('keypress', function(e) {
+    if(e.key === 'Enter') {
+        const val = this.value.trim();
+        if(val && !tempPlayers.includes(val)) {
+            tempPlayers.push(val);
+            const tag = document.createElement('div');
+            tag.className = 'player-tag';
+            tag.innerHTML = `${val} <span onclick="this.parentElement.remove()">×</span>`;
+            document.getElementById('playersTagsList').appendChild(tag);
+        }
+        this.value = "";
+    }
+});
+
+function handleAvatarPreview(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = e => {
+            document.getElementById('avatarPreview').src = e.target.result;
+            document.getElementById('avatarPlaceholder').style.display = 'none';
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
 }
-fetchServerStatus();
-setInterval(fetchServerStatus, 30000);
+
+// --- START ---
+fetchServerStatus().then(() => listenToTeams());
+setInterval(fetchServerStatus, 30000); // Odświeżaj BM co 30s
+
+// (Reszta funkcji auth: handleAuth, loginWithGoogle, switchAuthTab - skopiuj z poprzedniego pliku)
