@@ -14,6 +14,7 @@ const auth = firebase.auth();
 const SERVER_ID = '3344761';
 let playersOnlineNames = [];
 let authMode = 'login';
+let checkInterval = null; // Do automatycznego sprawdzania maila
 
 // --- AUTORYZACJA ---
 
@@ -48,7 +49,7 @@ async function handleAuth() {
 
             const res = await auth.createUserWithEmailAndPassword(emailOrLogin, pass);
             await res.user.sendEmailVerification();
-            alert("Konto założone! Potwierdź e-mail przed korzystaniem ze strony.");
+            alert("Konto założone! Potwierdź e-mail w swojej poczcie.");
 
             await db.collection("users").doc(nickLower).set({ email: emailOrLogin, uid: res.user.uid });
             await res.user.updateProfile({ displayName: nick });
@@ -93,7 +94,7 @@ async function saveOnboardingNick() {
     } catch (e) { alert(e.message); }
 }
 
-// KLUCZOWE: SPRAWDZANIE STANU WERYFIKACJI I BLOKADA STRONY
+// GŁÓWNA LOGIKA BLOKADY I AUTOMATYCZNEGO SPRAWDZANIA
 auth.onAuthStateChanged(user => {
     const btnCreateTeam = document.getElementById('btnCreateTeam');
     const verificationOverlay = document.getElementById('verificationOverlay');
@@ -103,18 +104,27 @@ auth.onAuthStateChanged(user => {
         document.getElementById('authButtons').style.display = 'none';
         document.getElementById('userInfo').style.display = 'flex';
         
-        // Logika weryfikacji
         const isVerified = user.emailVerified || user.providerData[0].providerId === 'google.com';
 
         if (isVerified) {
             if (verificationOverlay) verificationOverlay.style.display = 'none';
             if (mainContent) mainContent.style.opacity = '1';
             if (btnCreateTeam) btnCreateTeam.style.display = 'inline-block';
+            clearInterval(checkInterval); // Wyłączamy zegar jeśli już OK
         } else {
-            // BLOKADA JEŚLI NIEZWERYFIKOWANY
             if (verificationOverlay) verificationOverlay.style.display = 'flex';
-            if (mainContent) mainContent.style.opacity = '0'; // Całkowite ukrycie treści
+            if (mainContent) mainContent.style.opacity = '0';
             if (btnCreateTeam) btnCreateTeam.style.display = 'none';
+            
+            // AUTOMATYCZNE SPRAWDZANIE (co 3 sekundy)
+            if(!checkInterval) {
+                checkInterval = setInterval(async () => {
+                    await user.reload(); // Odśwież dane z Firebase
+                    if (user.emailVerified) {
+                        location.reload(); // Jeśli kliknął link, odśwież stronę
+                    }
+                }, 3000);
+            }
         }
         checkUserNick(user);
     } else {
@@ -123,6 +133,7 @@ auth.onAuthStateChanged(user => {
         if (verificationOverlay) verificationOverlay.style.display = 'none';
         if (mainContent) mainContent.style.opacity = '1';
         if (btnCreateTeam) btnCreateTeam.style.display = 'none';
+        clearInterval(checkInterval);
     }
 });
 
@@ -131,7 +142,10 @@ function resendVerifyEmail() {
         .then(() => alert("E-mail został wysłany ponownie!"));
 }
 
-function logoutUser() { auth.signOut().then(() => location.reload()); }
+function logoutUser() { 
+    clearInterval(checkInterval);
+    auth.signOut().then(() => location.reload()); 
+}
 
 // --- RUST LOGIKA ---
 
@@ -148,9 +162,8 @@ async function fetchServerStatus() {
 
 function addTeam() {
     const user = auth.currentUser;
-    if (!user || (!user.emailVerified && user.providerData[0].providerId !== 'google.com')) {
-        return alert("Musisz zweryfikować e-mail!");
-    }
+    if (!user || (!user.emailVerified && user.providerData[0].providerId !== 'google.com')) return;
+    
     const teamData = {
         name: document.getElementById('teamName').value,
         grid: document.getElementById('baseGrid').value.toUpperCase(),
