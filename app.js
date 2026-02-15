@@ -93,7 +93,6 @@ async function saveOnboardingNick() {
     } catch (e) { alert(e.message); }
 }
 
-// Słuchacz stanu - teraz kontroluje też przycisk "+ STWÓRZ TEAM"
 auth.onAuthStateChanged(user => {
     const authButtons = document.getElementById('authButtons');
     const userInfo = document.getElementById('userInfo');
@@ -102,13 +101,13 @@ auth.onAuthStateChanged(user => {
     if (user) {
         authButtons.style.display = 'none';
         userInfo.style.display = 'flex';
-        if (btnCreateTeam) btnCreateTeam.style.display = 'block'; // Pokaż przycisk
+        if (btnCreateTeam) btnCreateTeam.style.display = 'inline-block'; 
         toggleModal('authModal', false);
         checkUserNick(user);
     } else {
         authButtons.style.display = 'block';
         userInfo.style.display = 'none';
-        if (btnCreateTeam) btnCreateTeam.style.display = 'none'; // Ukryj przycisk
+        if (btnCreateTeam) btnCreateTeam.style.display = 'none';
     }
 });
 
