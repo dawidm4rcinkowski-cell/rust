@@ -1,4 +1,4 @@
-// Konfiguracja (bez zmian)
+// CONFIGURATION
 const firebaseConfig = {
     apiKey: "AIzaSyB74-e1hA8JW31YhdR_ZwgF-wfKdb3aqL4",
     authDomain: "ruscik-159d4.firebaseapp.com",
@@ -8,33 +8,35 @@ const firebaseConfig = {
     appId: "1:127501998256:web:99a73947e20f1eecb2c375"
 };
 
+// INITIALIZE
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const auth = firebase.auth();
 
 const SERVER_ID = '3344761';
-let playersOnlineNames = [];
-let tempPlayers = [];
-let currentAvatarBase64 = null;
 let authMode = 'login';
 
-// --- LOGOWANIE GOOGLE ---
-async function loginWithGoogle() {
-    const provider = new firebase.auth.GoogleAuthProvider();
-    try {
-        await auth.signInWithPopup(provider);
-        toggleModal('authModal', false);
-    } catch (e) { alert("Błąd Google: " + e.message); }
-}
+// --- AUTH LOGIC ---
 
-// --- RESZTA LOGIKI (IDENTYCZNA JAK WCZEŚNIEJ) ---
+// Funkcja przełączania taba (Login/Register)
 function switchAuthTab(mode) {
     authMode = mode;
-    document.getElementById('nickGroup').style.display = mode === 'login' ? 'none' : 'block';
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById('tab-' + mode).classList.add('active');
+    const nickGroup = document.getElementById('nickGroup');
+    const tabLogin = document.getElementById('tab-login');
+    const tabRegister = document.getElementById('tab-register');
+
+    if (mode === 'login') {
+        nickGroup.style.display = 'none';
+        tabLogin.classList.add('active');
+        tabRegister.classList.remove('active');
+    } else {
+        nickGroup.style.display = 'block';
+        tabRegister.classList.add('active');
+        tabLogin.classList.remove('active');
+    }
 }
 
+// Logowanie / Rejestracja E-mail
 async function handleAuth() {
     const email = document.getElementById('authEmail').value;
     const pass = document.getElementById('authPassword').value;
@@ -44,70 +46,87 @@ async function handleAuth() {
         if (authMode === 'login') {
             await auth.signInWithEmailAndPassword(email, pass);
         } else {
+            if (!nick) return alert("Podaj nick!");
             const res = await auth.createUserWithEmailAndPassword(email, pass);
             await res.user.updateProfile({ displayName: nick });
             await res.user.sendEmailVerification();
-            alert("Konto utworzone! Sprawdź e-mail.");
+            alert("Konto utworzone! Zweryfikuj e-mail, aby móc tworzyć teamy.");
         }
         toggleModal('authModal', false);
-    } catch (e) { alert(e.message); }
-}
-
-// System tagów graczy
-function addPlayerTag() {
-    const input = document.getElementById('playerSearch');
-    const nick = input.value.trim();
-    if (nick && !tempPlayers.includes(nick)) {
-        tempPlayers.push(nick);
-        renderTags();
-        input.value = "";
+    } catch (e) {
+        alert("Błąd: " + e.message);
     }
 }
-function renderTags() {
-    const container = document.getElementById('playersTagsList');
-    container.innerHTML = tempPlayers.map(p => `<div class="player-tag">${p}</div>`).join('');
+
+// Logowanie Google
+async function loginWithGoogle() {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    try {
+        await auth.signInWithPopup(provider);
+        toggleModal('authModal', false);
+    } catch (e) {
+        alert("Błąd Google: " + e.message);
+    }
 }
 
-// Stan użytkownika
+// Wylogowanie
+function logoutUser() {
+    auth.signOut().then(() => location.reload());
+}
+
+// MONITOROWANIE STANU UŻYTKOWNIKA (To tutaj włącza przycisk)
 auth.onAuthStateChanged(user => {
     const btnCreate = document.getElementById('btnCreateTeam');
-    const overlay = document.getElementById('verificationOverlay');
-    
+    const authButtons = document.getElementById('authButtons');
+    const userInfo = document.getElementById('userInfo');
+    const userNameDisplay = document.getElementById('userDisplayName');
+
     if (user) {
-        document.getElementById('authButtons').style.display = 'none';
-        document.getElementById('userInfo').style.display = 'flex';
-        document.getElementById('userDisplayName').innerText = user.displayName || "Gracz";
-        
-        const verified = user.emailVerified || user.providerData[0].providerId === 'google.com';
-        overlay.style.display = verified ? 'none' : 'flex';
-        btnCreate.style.display = verified ? 'inline-block' : 'none';
+        authButtons.style.display = 'none';
+        userInfo.style.display = 'flex';
+        userNameDisplay.innerText = user.displayName || "GRACZ";
+
+        // Sprawdź czy zweryfikowany (Google jest od razu, mail po kliknięciu w link)
+        const isVerified = user.emailVerified || (user.providerData.length > 0 && user.providerData[0].providerId === 'google.com');
+
+        if (isVerified) {
+            btnCreate.style.display = 'inline-block'; // POKAZUJE PRZYCISK
+        } else {
+            btnCreate.style.display = 'none';
+        }
     } else {
-        document.getElementById('authButtons').style.display = 'block';
-        document.getElementById('userInfo').style.display = 'none';
-        overlay.style.display = 'none';
+        authButtons.style.display = 'block';
+        userInfo.style.display = 'none';
+        btnCreate.style.display = 'none'; // UKRYWA PRZYCISK
     }
 });
 
-// Funkcje pomocnicze
-function toggleModal(id, show) { document.getElementById(id).style.display = show ? 'block' : 'none'; }
-function logoutUser() { auth.signOut().then(() => location.reload()); }
-async function manualCheckStatus() { 
-    await auth.currentUser.reload(); 
-    if(auth.currentUser.emailVerified) location.reload(); 
-    else alert("Brak weryfikacji!"); 
+// --- UI LOGIC ---
+
+function toggleModal(id, show) {
+    document.getElementById(id).style.display = show ? 'block' : 'none';
 }
 
-// BattleMetrics
+// --- BATTLEMETRICS & DATA ---
+
 async function fetchServerStatus() {
     try {
-        const res = await fetch(`https://api.battlemetrics.com/servers/${SERVER_ID}?include=player`);
+        const res = await fetch(`https://api.battlemetrics.com/servers/${SERVER_ID}`);
         const data = await res.json();
-        document.getElementById('serverName').innerText = data.data.attributes.name;
-        document.getElementById('onlineCount').innerText = `${data.data.attributes.players}/${data.data.attributes.maxPlayers}`;
-        playersOnlineNames = (data.included || []).map(p => p.attributes.name.toLowerCase());
-        listenToTeams();
-    } catch (e) {}
+        const server = data.data.attributes;
+        
+        document.getElementById('serverName').innerText = server.name;
+        document.getElementById('onlineCount').innerText = `${server.players}/${server.maxPlayers}`;
+    } catch (e) {
+        console.error("BattleMetrics Error:", e);
+    }
 }
+
+// Odświeżanie serwera co 30 sek
+fetchServerStatus();
+setInterval(fetchServerStatus, 30000);
+
+// --- TEAMS LOGIC ---
 
 function listenToTeams() {
     db.collection("teams").orderBy("createdAt", "desc").onSnapshot(snap => {
@@ -115,14 +134,16 @@ function listenToTeams() {
         container.innerHTML = "";
         snap.forEach(doc => {
             const team = doc.data();
-            const box = document.createElement('div');
-            box.className = 'team-box';
-            box.style = "background:#111; padding:15px; margin-bottom:10px; border-left:4px solid #cd412b";
-            box.innerHTML = `<h3>${team.name} [${team.grid}]</h3>`;
-            container.appendChild(box);
+            const div = document.createElement('div');
+            div.className = 'team-card'; // Upewnij się, że masz styl .team-card w CSS
+            div.innerHTML = `
+                <div style="background: #1a1a1a; padding: 20px; border-left: 4px solid #cd412b; margin-bottom: 15px;">
+                    <h3 style="margin:0; color:#cd412b;">${team.name} [${team.grid}]</h3>
+                    <p style="color:#888; margin: 5px 0;">Lider: ${team.leaderNick}</p>
+                </div>
+            `;
+            container.appendChild(div);
         });
     });
 }
-
-fetchServerStatus();
-setInterval(fetchServerStatus, 30000);
+listenToTeams();
